@@ -124,3 +124,33 @@ class LLMClientFactory:
         if _is_gguf_path(path):
             return GgufLLMClient(model_path=path)
         return OllamaLLMClient(model_name=path)
+
+    @staticmethod
+    def main_responser() -> LLMClient:
+        """Chatbot ana yanıtlayıcı için kendi model dizinini kullanır."""
+        return LLMClientFactory.create(model_path=settings.main_responser_model_path)
+
+    @staticmethod
+    def data_cleaner() -> LLMClient:
+        """Veri temizleyici için kendi model dizinini kullanır."""
+        return LLMClientFactory.create(model_path=settings.data_cleaner_model_path)
+
+    @staticmethod
+    def extractor() -> LLMClient:
+        """Bilgi çıkarımı için kendi model dizinini kullanır."""
+        return LLMClientFactory.create(model_path=settings.extractor_model_path)
+
+    @staticmethod
+    def classifier() -> LLMClient:
+        """Sınıflandırma için kendi model dizinini kullanır."""
+        return LLMClientFactory.create(model_path=settings.classifier_model_path)
+
+    @staticmethod
+    def embedder() -> LLMClient:
+        """Vektör arama gömme için kendi model dizinini kullanır."""
+        return LLMClientFactory.create(model_path=settings.embedder_model_path)
+
+    @staticmethod
+    def comparison() -> LLMClient:
+        """Karşılaştırma servisi için kendi model dizinini kullanır."""
+        return LLMClientFactory.create(model_path=settings.comparison_model_path)

@@ -62,6 +62,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | Yerel LLM olarak qwen2.5-3b-instruct GGUF modeli llama.cpp ile entegre edildi; model/ dizinine taşındı, LLMClientFactory GGUF desteği eklenedi, ADR-003 kesinleştirildi | src/backend/core/llm_factory.py, src/backend/core/config.py, src/backend/services/chatbot_service.py, model/, .env, requirements.txt, DECISIONS.md, README.md | tamamlandı
 
+- 2026-07-16 | Görev bazlı model dizinleri oluşturuldu (model/{main_responser,data_cleaner,extractor,classifier,embedder,comparison}/); her birine aynı GGUF kopyalandı, fabrika görev özel yollarla güncellendi | model/*, src/backend/core/config.py, src/backend/core/llm_factory.py, src/backend/services/chatbot_service.py, .env, tests/test_backend/test_gguf_llm.py | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)

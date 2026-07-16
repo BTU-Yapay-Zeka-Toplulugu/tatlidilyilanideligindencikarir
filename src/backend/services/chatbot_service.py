@@ -12,7 +12,7 @@ class ChatbotService:
     def __init__(self, vector_store: VectorStore, llm: LLMClient | None = None) -> None:
         """Vektör deposunu ve LLM istemcisini enjekte eder."""
         self.vector_store = vector_store
-        self.llm = llm or LLMClientFactory.create()
+        self.llm = llm or LLMClientFactory.main_responser()
 
     def _build_prompt(self, question: str, contexts: list[str]) -> str:
         """Retrieval bağlamından instruct uyumlu bir istem metni oluşturur."""

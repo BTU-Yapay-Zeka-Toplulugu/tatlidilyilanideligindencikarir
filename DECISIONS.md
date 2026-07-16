@@ -44,7 +44,7 @@ Format:
 - **Karar:** Model doğrudan **llama.cpp (llama-cpp-python)** ile çalıştırılır; Ollama sunucusu kullanılmaz. Test/model için seçilen model: **`qwen2.5-3b-instruct-q4_k_m.gguf`** (Qwen2.5 3B, Q4_K_M quantized, multilingual/TR dostu, çevrimdışı). Model dosyası `model/` dizinine konur ve `LOCAL_MODEL_PATH` (`.env`) ile gösterilir; dizin ise içindeki ilk `.gguf` otomatik yüklenir. Daha iyi bir model için sadece yeni `.gguf` `model/` altına bırakılır.
 - **Gerekçe:** llama.cpp saf Python + C binding ile çevrimdışı, açık kaynak ve hızlıdır; Ollama'ya bağımlılık gerektirmez. `LLMClientFactory` (auto→gguf) ile model değişimi kodsuz yapılır (ADR-003 sonucu karşılandı).
 - **Alternatifler:** Ollama (ayrı servis/indirme gerektirir; elendi), Türkçe Llama/Mistral fine-tune (ileride `model/` altına GGUF olarak eklenebilir), HuggingFace üzerinden ağırlık indirme (internet bağımlılığı yasağı gereği elendi).
-- **Sonuçlar:** `src/backend/core/llm_factory.py` → `GgufLLMClient` (llama.cpp) eklendi; `LLM_BACKEND=auto|gguf|ollama` desteği. `requirements.txt`'e `llama-cpp-python` eklendi. Chatbot için instruct şablonu (`<|im_start|>`/`) kullanılır.
+- **Sonuçlar:** `src/backend/core/llm_factory.py` → `GgufLLMClient` (llama.cpp) eklendi; `LLM_BACKEND=auto|gguf|ollama` desteği. `requirements.txt`'e `llama-cpp-python` eklendi. Chatbot için instruct şablonu (`<|im_start|>`/`) kullanılır. Her görev için ayrı model dizini: `model/{main_responser,data_cleaner,extractor,classifier,embedder,comparison}/`; fabrika `LLMClientFactory.<görev>()` ile ilgili yolu kullanır, böylece ileride her modüle ayrı `.gguf` kolayca atanabilir (sistemsel tek model yerine görev bazlı modeller).
 
 ## ADR-004: Veri Deposu — PostgreSQL vs SQLite
 
