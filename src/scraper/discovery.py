@@ -1,0 +1,142 @@
+"""Banka sitelerinden kampanya/ürün sayfası URL'lerini keşfeden modül."""
+
+import re
+import logging
+from urllib.parse import urljoin, urlparse
+from typing import Optional
+
+from bs4 import BeautifulSoup
+
+from src.scraper.config import CAMPAIGN_KEYWORDS
+from src.scraper.http_client import fetch_and_parse, fetch_page
+from src.scraper.models import BankInfo, CampaignPage
+
+logger = logging.getLogger(__name__)
+
+# robots.txt / sitemap içindeki URL deseni
+SITEMAP_URL_PATTERN = re.compile(r"<loc>(https?://[^<]+)</loc>")
+
+
+def _is_same_domain(base_url: str, candidate_url: str) -> bool:
+    """İki URL'nin aynı domain'e ait olup olmadığını kontrol eder."""
+    base_domain = urlparse(base_url).netloc.replace("www.", "")
+    candidate_domain = urlparse(candidate_url).netloc.replace("www.", "")
+    return base_domain == candidate_domain
+
+
+def _url_contains_campaign_keyword(url: str) -> bool:
+    """URL yolunda kampanya anahtar kelimesi olup olmadığını kontrol eder."""
+    path = urlparse(url).path.lower()
+    return any(keyword in path for keyword in CAMPAIGN_KEYWORDS)
+
+
+def _link_text_contains_campaign_keyword(text: str) -> bool:
+    """Link metninde kampanya anahtar kelimesi olup olmadığını kontrol eder."""
+    text_lower = text.lower()
+    # Türkçe karakter varyasyonları dahil
+    turkish_keywords = CAMPAIGN_KEYWORDS + [
+        "kampanya", "fırsat", "ürün", "oran",
+        "hesap", "kredi", "finansman",
+    ]
+    return any(kw in text_lower for kw in turkish_keywords)
+
+
+def discover_links_from_page(
+    bank: BankInfo, soup: BeautifulSoup
+) -> list[CampaignPage]:
+    """Bir sayfadaki tüm linkleri tarayıp kampanya sayfalarını filtreler."""
+    found_pages: list[CampaignPage] = []
+    seen_urls: set[str] = set()
+
+    for a_tag in soup.find_all("a", href=True):
+        href = a_tag["href"]
+        full_url = urljoin(bank.url, href).rstrip("/")
+
+        # Aynı URL'yi tekrar ekleme
+        if full_url in seen_urls:
+            continue
+        seen_urls.add(full_url)
+
+        # Farklı domain'e ait linkleri atla
+        if not _is_same_domain(bank.url, full_url):
+            continue
+
+        # Fragment ve query-only linkleri atla
+        parsed = urlparse(full_url)
+        if not parsed.path or parsed.path == "/":
+            continue
+
+        # URL veya link metninde kampanya anahtar kelimesi aranır
+        link_text = a_tag.get_text(strip=True)
+        if _url_contains_campaign_keyword(full_url) or _link_text_contains_campaign_keyword(link_text):
+            page = CampaignPage(
+                bank_id=bank.id,
+                bank_name=bank.name,
+                page_url=full_url,
+                page_title=link_text or None,
+            )
+            found_pages.append(page)
+
+    return found_pages
+
+
+def try_sitemap(bank: BankInfo) -> list[CampaignPage]:
+    """Bankanın sitemap.xml dosyasından kampanya URL'lerini çıkarmayı dener."""
+    sitemap_urls = [
+        f"{bank.url}/sitemap.xml",
+        f"{bank.url}/sitemap_index.xml",
+    ]
+
+    found_pages: list[CampaignPage] = []
+
+    for sitemap_url in sitemap_urls:
+        xml_content = fetch_page(sitemap_url, timeout=15)
+        if xml_content is None:
+            continue
+
+        urls = SITEMAP_URL_PATTERN.findall(xml_content)
+        for url in urls:
+            if _url_contains_campaign_keyword(url):
+                page = CampaignPage(
+                    bank_id=bank.id,
+                    bank_name=bank.name,
+                    page_url=url.rstrip("/"),
+                    page_title=None,
+                )
+                found_pages.append(page)
+
+        if found_pages:
+            logger.info(
+                "Sitemap'ten %d kampanya URL'si bulundu: %s",
+                len(found_pages), bank.name,
+            )
+            break
+
+    return found_pages
+
+
+def discover_campaign_pages(bank: BankInfo) -> list[CampaignPage]:
+    """Bir banka için tüm kampanya sayfalarını keşfeder (sitemap + ana sayfa taraması)."""
+    all_pages: list[CampaignPage] = []
+    seen_urls: set[str] = set()
+
+    # 1. Sitemap denemesi
+    sitemap_pages = try_sitemap(bank)
+    for page in sitemap_pages:
+        if page.page_url not in seen_urls:
+            seen_urls.add(page.page_url)
+            all_pages.append(page)
+
+    # 2. Ana sayfa link taraması
+    soup = fetch_and_parse(bank.url)
+    if soup:
+        link_pages = discover_links_from_page(bank, soup)
+        for page in link_pages:
+            if page.page_url not in seen_urls:
+                seen_urls.add(page.page_url)
+                all_pages.append(page)
+
+    logger.info(
+        "%s: toplam %d kampanya sayfası keşfedildi.", bank.name, len(all_pages)
+    )
+    return all_pages
