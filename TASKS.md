@@ -89,7 +89,7 @@
 
 | Kişi | Görev | Durum |
 | --- | --- | --- |
-| Kişi 1 | Son veri kontrolleri, GitHub dokümantasyonu | [ ] |
+| Kişi 1 | Son veri kontrolleri, GitHub dokümantasyonu | [x] |
 | Kişi 2 | Sonuç örnekleri, performans metrikleri dokümantasyonu | [x] |
 | Kişi 3 | API dokümantasyonu, son sistem testleri, GitHub dokümantasyonu | [x] |
 | Kişi 4 | Demo videosu, sunum (PDF+PPTX), README finalize | [ ] |

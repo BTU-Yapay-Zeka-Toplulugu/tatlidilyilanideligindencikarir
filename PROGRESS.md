@@ -56,6 +56,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | Sonuç örnekleri ve performans metrikleri dokümanı oluşturuldu (gerçek değerlendirme çıktısıyla) | docks/results-metrics.md | tamamlandı
 
+- 2026-07-16 | Son veri kalitesi kontrolü yapıldı (121 kayıt, 9 banka, eksik başlık/boş içerik yok); GitHub dokümantasyonu (CONTRIBUTING.md) eklendi | CONTRIBUTING.md, PROGRESS.md | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)
