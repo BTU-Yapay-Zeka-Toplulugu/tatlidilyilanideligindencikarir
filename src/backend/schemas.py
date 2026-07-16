@@ -11,6 +11,10 @@ class BankBase(BaseModel):
     url: str
 
 
+class BankCreate(BankBase):
+    """Yeni banka oluşturma isteği için Pydantic şeması."""
+
+
 class BankResponse(BankBase):
     """Banka API yanıtları için Pydantic şeması."""
 
@@ -29,6 +33,19 @@ class CampaignBase(BaseModel):
     source_url: str
     page_title: str
     raw_text: str
+
+
+class CampaignCreate(CampaignBase):
+    """Yeni kampanya oluşturma isteği için Pydantic şeması."""
+
+
+class CampaignUpdate(BaseModel):
+    """Kampanya güncelleme isteği için Pydantic şeması (kısmi alanlar)."""
+
+    bank_id: int | None = None
+    source_url: str | None = None
+    page_title: str | None = None
+    raw_text: str | None = None
 
 
 class CampaignResponse(BaseModel):

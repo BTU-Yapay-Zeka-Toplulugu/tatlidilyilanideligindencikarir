@@ -139,3 +139,62 @@ def test_compare_campaigns(client, test_db):
     assert data[0]["profit_share_rate"] == 25.0
     assert data[1]["bank_name"] == "Bank A"
     assert data[1]["profit_share_rate"] == 15.0
+
+
+def test_create_and_delete_bank(client):
+    """Banka oluşturma ve silme uç noktalarını doğrular."""
+    create = client.post("/api/banks", json={"name": "Yeni Bank", "url": "https://yeni.com"})
+    assert create.status_code == 201
+    bank_id = create.json()["id"]
+
+    listing = client.get("/api/banks").json()
+    assert any(b["id"] == bank_id for b in listing)
+
+    delete = client.delete(f"/api/banks/{bank_id}")
+    assert delete.status_code == 204
+    assert not any(b["id"] == bank_id for b in client.get("/api/banks").json())
+
+
+def test_create_update_delete_campaign(client, test_db):
+    """Kampanya CRUD akışını (oluştur, güncelle, sil) doğrular."""
+    bank = Bank(name="CRUD Bank", url="https://crud.com")
+    test_db.add(bank)
+    test_db.commit()
+
+    create = client.post(
+        "/api/campaigns",
+        json={
+            "bank_id": bank.id,
+            "source_url": "https://crud.com/k1",
+            "page_title": "İlk Kampanya",
+            "raw_text": "Katılma hesabı kâr payı %10.0 ve 6 ay vadeli.",
+        },
+    )
+    assert create.status_code == 201
+    campaign_id = create.json()["id"]
+    assert create.json()["extracted_detail"]["profit_share_rate"] == 10.0
+
+    update = client.put(
+        f"/api/campaigns/{campaign_id}",
+        json={"page_title": "Güncellenmiş Kampanya"},
+    )
+    assert update.status_code == 200
+    assert update.json()["page_title"] == "Güncellenmiş Kampanya"
+
+    delete = client.delete(f"/api/campaigns/{campaign_id}")
+    assert delete.status_code == 204
+    assert client.get(f"/api/campaigns/{campaign_id}").status_code == 404
+
+
+def test_create_campaign_unknown_bank(client):
+    """Var olmayan bankaya kampanya oluşturma 404 döner."""
+    response = client.post(
+        "/api/campaigns",
+        json={
+            "bank_id": 9999,
+            "source_url": "https://x.com/k",
+            "page_title": "Yok",
+            "raw_text": "test",
+        },
+    )
+    assert response.status_code == 404

@@ -64,7 +64,7 @@
 | --- | --- | --- |
 | Kişi 1 | Veri setinin genişletilmesi, temizleme, DB'ye ilk yükleme | [ ] |
 | Kişi 2 | Bilgi çıkarımı kural tabanlı prototip + normalizasyon fonksiyonları | [x] |
-| Kişi 3 | API endpoint'leri (CRUD, listeleme), DB entegrasyonu | [ ] |
+| Kişi 3 | API endpoint'leri (CRUD, listeleme), DB entegrasyonu | [x] |
 | Kişi 4 | Backend API ile dashboard iskeletinin bağlanması | [ ] |
 
 ### Hafta 3 (10–16 Ağu)
