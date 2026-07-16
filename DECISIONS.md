@@ -65,3 +65,13 @@ Format:
 - **Gerekçe:** Chroma; metadata filtreleme, diskte kalıcılık ve Python ile kolay entegrasyon sunar, tamamen açık kaynak ve on-premise'dir. Embedding üretimi için `LOCAL_MODEL_PATH` (ADR-003) üzerinden çevrimdışı `sentence-transformers` modeli kullanılır; harici indirme olmadan çalışması için varsayılan olarak çevrimdışı `LocalLexicalEmbedder` (bag-of-words) sağlanmıştır.
 - **Alternatifler:** FAISS (düşük seviyeli, kalıcılık/metadata yöneticisi manuel; elendi), Pinecone (ücretli/bulut; ADR-001 gereği elendi).
 - **Sonuçlar:** `src/backend/core/vector_store.py` (VectorStoreFactory + Chroma/InMemory) ve `src/backend/core/embeddings.py` (Embedder arayüzü) oluşturuldu. Docker imajına `chromadb` bağımlılığı eklenmelidir.
+
+## ADR-006: Frontend Teknoloji Seçimi — Streamlit
+
+- **Tarih:** 16 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** README/ARCHITECTURE "React + Recharts/Plotly ya da Streamlit" diyordu; net seçim yoktu. Yarışma demosu için hızlı, çevrimdışı, Python-tabanlı ve backend ile aynı dilde çalışan bir ön yüz gerekiyordu.
+- **Karar:** Dashboard ve chatbot arayüzü için **Streamlit** kullanılacaktır. Backend FastAPI'ye HTTP ile bağlanır; grafikler için `plotly`/`streamlit` yerleşik bileşenleri kullanılır.
+- **Gerekçe:** Sıfır frontend build adımı, hızlı prototip, Python ekibi için düşük öğrenme eğrisi; tamamen açık kaynak ve on-premise. Gerekirse ileride React'e geçiş için arayüz API üzerinden ayrık tutulur.
+- **Alternatifler:** React + Recharts/Plotly (daha üretim kaliteli ama ayrı build zinciri/JS ekibi gerektirir; elendi).
+- **Sonuçlar:** `src/frontend/` altına Streamlit uygulaması (`app.py`) yazılacak; `requirements.txt`'e `streamlit`, `plotly` eklenecek.

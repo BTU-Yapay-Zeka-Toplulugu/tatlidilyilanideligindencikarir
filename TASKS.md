@@ -56,7 +56,7 @@
 | Kişi 1 | BDDK banka listesi taraması, scraper iskeleti, ilk veri toplama | [x] |
 | Kişi 2 | Ön işleme pipeline tasarımı, terminoloji sözlüğü (kâr payı, finansman vb.) oluşturma | [x] |
 | Kişi 3 | Teknoloji seçimi, DB şeması taslağı, FastAPI proje iskeleti | [x] |
-| Kişi 4 | UI/UX tasarımı, dashboard/chatbot iskelet arayüz | [ ] |
+| Kişi 4 | UI/UX tasarımı, dashboard/chatbot iskelet arayüz | [x] |
 
 ### Hafta 2 (3–9 Ağu)
 

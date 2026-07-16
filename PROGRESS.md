@@ -44,6 +44,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | API dokümantasyonu (docks/api-spec.md) yazıldı, tüm sistem testleri çalıştırıldı (99 passed), GitHub dokümantasyonu güncellendi | docks/api-spec.md, README.md, PROGRESS.md | tamamlandı
 
+- 2026-07-16 | Frontend iskeleti (Streamlit dashboard + RAG chatbot arayüzü) ve API istemci katmanı; ADR-006 (Streamlit) eklendi | src/frontend/{app,api_client}.py, tests/test_frontend/test_api_client.py, requirements.txt, DECISIONS.md | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)
