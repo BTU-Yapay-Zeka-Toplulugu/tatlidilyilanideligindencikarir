@@ -26,6 +26,9 @@ def test_extract_term_months():
     assert extract_term_months("3 aya varan kâr payı ödemeli hesap.") == 3
     assert extract_term_months("180 günlük katılma hesabı.") == 6
     assert extract_term_months("Vade bilgisi içermeyen metin.") is None
+    # Edge-case: yıl ifadesi ay'a çevrilir
+    assert extract_term_months("2 yıla varan vadeli katılma hesabı.") == 24
+    assert extract_term_months("1.5 yıl vade") == 18
 
 
 def test_extract_amounts():

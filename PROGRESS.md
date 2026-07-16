@@ -52,6 +52,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | Chatbot arayüz entegrasyonu ve uçtan uca (scraper→NLP→backend→frontend) entegrasyon testi; LLM yokken chatbot zarifçe düşen fallback eklendi | tests/test_frontend/test_e2e.py, src/backend/services/chatbot_service.py | tamamlandı
 
+- 2026-07-16 | NLP edge-case düzeltmeleri: vade çıkarımına yıl→ay ve ondalıklı yıl desteği eklendi | src/nlp/extractor.py, tests/test_nlp/test_extractor.py | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)

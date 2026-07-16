@@ -31,6 +31,7 @@ def extract_term_months(text: str) -> int | None:
         return None
 
     patterns = [
+        r"(\d+(?:[\.,]\d+)?)\s*yıl(?:a|ı|ın)?\s*(?:varan|vade|boyunca|lık)?",
         r"(\d+)\s*ay(?:a|ı|ın)?\s*(?:varan|vade|boyunca|lık)?",
         r"(\d+)\s*gün(?:e|lük)?\s*(?:varan|vade|boyunca|lük)?",
     ]
@@ -38,10 +39,13 @@ def extract_term_months(text: str) -> int | None:
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
-            value = int(match.group(1))
-            if "gün" in match.group(0).lower():
+            value = float(match.group(1).replace(",", "."))
+            token = match.group(0).lower()
+            if "yıl" in token:
+                return max(1, round(value * 12))
+            if "gün" in token:
                 return max(1, round(value / 30))
-            return value
+            return int(value)
     return None
 
 

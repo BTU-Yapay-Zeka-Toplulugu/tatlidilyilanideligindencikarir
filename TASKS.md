@@ -81,7 +81,7 @@
 | Kişi | Görev | Durum |
 | --- | --- | --- |
 | Kişi 1 | Periyodik yeniden tarama otomasyonu, veri dokümantasyonu | [x] |
-| Kişi 2 | Model ince ayarları, hata analizi, edge-case düzeltmeleri | [ ] |
+| Kişi 2 | Model ince ayarları, hata analizi, edge-case düzeltmeleri | [x] |
 | Kişi 3 | RAG chatbot backend'i, Docker/on-premise kurulum, performans testleri | [x] |
 | Kişi 4 | Chatbot arayüz entegrasyonu, uçtan uca entegrasyon testi | [x] |
 
