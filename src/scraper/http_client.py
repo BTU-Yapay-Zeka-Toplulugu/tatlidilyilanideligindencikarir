@@ -37,6 +37,9 @@ def fetch_page(url: str, timeout: int = REQUEST_TIMEOUT) -> Optional[str]:
             logger.warning(
                 "HTTP hatası [%d/%d]: %s — %s", attempt, MAX_RETRIES, url, e
             )
+            if e.response is not None and e.response.status_code == 404:
+                logger.info("404 Hatası tespit edildi, tekrar denenmiyor.")
+                break
         except requests.exceptions.ConnectionError as e:
             logger.warning(
                 "Bağlantı hatası [%d/%d]: %s — %s", attempt, MAX_RETRIES, url, e

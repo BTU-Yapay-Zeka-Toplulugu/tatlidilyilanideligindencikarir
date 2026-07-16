@@ -7,7 +7,7 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.scraper.config import CAMPAIGN_KEYWORDS
+from src.scraper.config import CAMPAIGN_KEYWORDS, MAX_PAGES_PER_BANK
 from src.scraper.http_client import fetch_and_parse, fetch_page
 from src.scraper.models import BankInfo, CampaignPage
 
@@ -137,6 +137,7 @@ def discover_campaign_pages(bank: BankInfo) -> list[CampaignPage]:
                 all_pages.append(page)
 
     logger.info(
-        "%s: toplam %d kampanya sayfası keşfedildi.", bank.name, len(all_pages)
+        "%s: toplam %d kampanya sayfası keşfedildi. Sınır: %d.",
+        bank.name, len(all_pages), MAX_PAGES_PER_BANK
     )
-    return all_pages
+    return all_pages[:MAX_PAGES_PER_BANK]

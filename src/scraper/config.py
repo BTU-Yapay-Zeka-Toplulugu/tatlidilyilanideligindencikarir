@@ -39,15 +39,15 @@ CAMPAIGN_KEYWORDS = [
     "firsatlar",
     "duyuru",
     "duyurular",
-    "bireysel",
-    "kobi",
-    "ticari",
-    "finansman",
     "kar-payi",
     "kar_payi",
-    "urunler",
     "oranlar",
+    "oran",
 ]
 
 # Kampanya metin çıkarımı için minimum karakter sayısı
 MIN_CONTENT_LENGTH = 50
+
+# Banka başına maksimum taranacak kampanya sayfa sayısı
+MAX_PAGES_PER_BANK = 15
+
