@@ -34,6 +34,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - **[Tarih girilecek]** — Proje context dosyaları (README, CLAUDE.md, AGENTS.md, ARCHITECTURE.md, PROGRESS.md, DECISIONS.md, TASKS.md) oluşturuldu.
 
+- 2026-07-16 | FastAPI proje iskeleti katmanlı mimariyle kuruldu (Repository, Service, Factory, DI); monolit main.py parçalandı, bozuk backend test fixture'ı (StaticPool) düzeltildi | src/backend/main.py, src/backend/core/{config,database,llm_factory}.py, src/backend/repositories/campaign_repository.py, src/backend/services/{campaign_service,comparison_service}.py, src/backend/api/routes/{campaigns,compare}.py, tests/test_backend/test_api.py | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)
