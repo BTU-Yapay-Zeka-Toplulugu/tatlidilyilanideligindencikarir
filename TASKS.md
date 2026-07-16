@@ -5,7 +5,7 @@
 ### Kişi 1 — Veri Mühendisi (Data Collection)
 - [x] BDDK listesindeki katılım bankalarının web sitelerinin taranması
 - [x] Scraper geliştirme (Python), kampanya/ürün metinlerinin toplanması
-- [ ] Ham verinin temizlenmesi, veri seti (CSV/JSON) oluşturulması
+- [x] Ham verinin temizlenmesi, veri seti (CSV/JSON) oluşturulması
 - [ ] Veritabanı şeması tasarımı ve kurulumu
 - [ ] Veri kalitesi kontrolleri ve periyodik yeniden tarama (crawl) süreci
 

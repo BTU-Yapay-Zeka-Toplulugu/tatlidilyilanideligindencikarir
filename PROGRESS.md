@@ -15,6 +15,7 @@
 
 ## Bugün / Bu Oturumda Yapılanlar
 
+- 16.07.2026 | Ham veri temizleme modülü (data_cleaner.py) yazıldı, 121 kayıt temizlenip data/processed altına JSON+CSV kaydedildi | src/scraper/data_cleaner.py, tests/test_scraper/test_data_cleaner.py, data/processed/ | tamamlandı
 - 16.07.2026 | Veri kalitesi denetim scripti (check_data_quality.py) yazıldı ve çalıştırıldı. Hafta 1 görevleri tamamlandı | src/scraper/check_data_quality.py, TASKS.md | tamamlandı
 - 16.07.2026 | İlk veri toplama işlemi 10 banka için tamamlandı, veriler data/raw altına kaydedildi | data/raw/ | tamamlandı
 - 16.07.2026 | Scraper politeness, 404 hata yönetimi ve sayfa limiti (MAX_PAGES_PER_BANK) eklendi | src/scraper/config.py, src/scraper/http_client.py, src/scraper/discovery.py | tamamlandı
