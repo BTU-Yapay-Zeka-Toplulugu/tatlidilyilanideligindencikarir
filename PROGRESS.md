@@ -46,6 +46,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | Frontend iskeleti (Streamlit dashboard + RAG chatbot arayüzü) ve API istemci katmanı; ADR-006 (Streamlit) eklendi | src/frontend/{app,api_client}.py, tests/test_frontend/test_api_client.py, requirements.txt, DECISIONS.md | tamamlandı
 
+- 2026-07-16 | Frontend ↔ Backend uçtan uca bağlantı testi (gerçek FastAPI üzerinden kampanya/karşılaştırma akışı doğrulandı) | tests/test_frontend/test_integration.py, tests/conftest.py | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)
