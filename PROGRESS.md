@@ -4,18 +4,22 @@
 
 ## Son Güncelleme
 
-- **Tarih:** (henüz başlamadı)
-- **Güncelleyen:** —
-- **Genel Durum:** Proje planlama aşamasında, geliştirme henüz başlamadı.
+- **Tarih:** 16 Temmuz 2026
+- **Güncelleyen:** Kişi 1 — Veri Mühendisi
+- **Genel Durum:** Geliştirme aşaması başladı, Hafta 1 görevleri yürütülüyor.
 
 ## Şu An Neredeyiz
 
 - [ ] İdari aşama tamamlanmadı (takım kaydı, başvuru, sınav, kick-off bekleniyor)
-- [ ] Geliştirme aşaması başlamadı
+- [x] Geliştirme aşaması başladı (Hafta 1)
 
 ## Bugün / Bu Oturumda Yapılanlar
 
+- 16.07.2026 | BDDK banka listesi data/ altına taşındı, URL'ler test edilip düzeltildi | data/bank_sites.txt, src/scraper/config.py, src/scraper/check_bank_urls.py | tamamlandı
+- src/scraper/bank_sites/bank_sites.txt oluşturuldu, 10 katılım bankasının web sitesi linki listelendi. "Değişen Dosyalar" listesine de ekle.
+
 _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
+
 
 - **[Tarih girilecek]** — Proje context dosyaları (README, CLAUDE.md, AGENTS.md, ARCHITECTURE.md, PROGRESS.md, DECISIONS.md, TASKS.md) oluşturuldu.
 

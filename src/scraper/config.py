@@ -11,7 +11,7 @@ RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 
 # Banka site listesi
-BANK_SITES_FILE = Path(__file__).resolve().parent / "bank_sites" / "bank_sites.txt"
+BANK_SITES_FILE = DATA_DIR / "bank_sites.txt"
 
 # HTTP ayarları
 REQUEST_TIMEOUT = 30  # saniye
