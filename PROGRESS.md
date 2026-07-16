@@ -54,6 +54,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | NLP edge-case düzeltmeleri: vade çıkarımına yıl→ay ve ondalıklı yıl desteği eklendi | src/nlp/extractor.py, tests/test_nlp/test_extractor.py | tamamlandı
 
+- 2026-07-16 | Sonuç örnekleri ve performans metrikleri dokümanı oluşturuldu (gerçek değerlendirme çıktısıyla) | docks/results-metrics.md | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)
