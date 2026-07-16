@@ -7,7 +7,7 @@
 - [x] Scraper geliştirme (Python), kampanya/ürün metinlerinin toplanması
 - [x] Ham verinin temizlenmesi, veri seti (CSV/JSON) oluşturulması
 - [x] Veritabanı şeması tasarımı ve kurulumu
-- [ ] Veri kalitesi kontrolleri ve periyodik yeniden tarama (crawl) süreci
+- [x] Veri kalitesi kontrolleri ve periyodik yeniden tarama (crawl) süreci
 
 ### Kişi 2 — NLP / Model Mühendisi
 - [ ] Metin ön işleme pipeline'ı (temizleme, tokenizasyon, normalizasyon)
@@ -71,7 +71,7 @@
 
 | Kişi | Görev | Durum |
 | --- | --- | --- |
-| Kişi 1 | Veri kalite kontrolü, eksik/edge-case veri toplama | [ ] |
+| Kişi 1 | Veri kalite kontrolü, eksik/edge-case veri toplama | [x] |
 | Kişi 2 | Kampanya sınıflandırma modeli, çıkarım doğruluğunun test edilmesi | [ ] |
 | Kişi 3 | Karşılaştırma sorguları, vektör DB kurulumu (Chroma/FAISS) | [ ] |
 | Kişi 4 | Dashboard tam işlevsel hale getirme, chatbot arayüz tasarımı | [ ] |
@@ -80,7 +80,7 @@
 
 | Kişi | Görev | Durum |
 | --- | --- | --- |
-| Kişi 1 | Periyodik yeniden tarama otomasyonu, veri dokümantasyonu | [ ] |
+| Kişi 1 | Periyodik yeniden tarama otomasyonu, veri dokümantasyonu | [x] |
 | Kişi 2 | Model ince ayarları, hata analizi, edge-case düzeltmeleri | [ ] |
 | Kişi 3 | RAG chatbot backend'i, Docker/on-premise kurulum, performans testleri | [ ] |
 | Kişi 4 | Chatbot arayüz entegrasyonu, uçtan uca entegrasyon testi | [ ] |

@@ -15,6 +15,7 @@
 
 ## Bugün / Bu Oturumda Yapılanlar
 
+- 2026-07-16 | Veri kalitesi denetimlerinin veritabanı desteğiyle genişletilmesi, DB loader ve periyodik tarama otomasyonu (periodic_runner.py) | src/scraper/periodic_runner.py, src/database/loader.py, src/scraper/check_data_quality.py, tests/test_scraper/test_periodic_runner.py | tamamlandı
 - 2026-07-16 | Veritabanı şeması tasarımı ve kurulumu (PostgreSQL + SQLAlchemy ORM) | src/database/, tests/test_database.py, docker-compose.yml, .env.example, docks/data-schema.md | tamamlandı
 - 16.07.2026 | Ham veri temizleme modülü (data_cleaner.py) yazıldı, 121 kayıt temizlenip data/processed altına JSON+CSV kaydedildi | src/scraper/data_cleaner.py, tests/test_scraper/test_data_cleaner.py, data/processed/ | tamamlandı
 - 16.07.2026 | Veri kalitesi denetim scripti (check_data_quality.py) yazıldı ve çalıştırıldı. Hafta 1 görevleri tamamlandı | src/scraper/check_data_quality.py, TASKS.md | tamamlandı
