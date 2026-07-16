@@ -5,48 +5,85 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.api_client import ApiClient
+from src.frontend.ui_helpers import filter_by_bank
+
+
+def _filter_by_bank(results: list[dict], selected_bank: str) -> list[dict]:
+    """Sonuçları seçili bankaya göre süzer (ui_helpers sarmalayıcısı)."""
+    return filter_by_bank(results, selected_bank)
 
 
 def render_dashboard(client: ApiClient) -> None:
-    """Karşılaştırma tablosu ve filtrelerle dashboard sekmesini çizer."""
+    """Filtreler, grafik ve tabloyla tam işlevsel dashboard sekmesini çizer."""
     st.header("Kampanya Karşılaştırma Paneli")
     banks = client.get_banks()
-    bank_options = {b["name"]: b["id"] for b in banks}
-    selected_bank = st.selectbox("Banka seçin", ["Tümü"] + list(bank_options.keys()))
+    bank_options = [b["name"] for b in banks]
+    selected_bank = st.selectbox("Banka seçin", ["Tümü"] + bank_options)
 
     col1, col2 = st.columns(2)
     term = col1.number_input("Vade (ay)", min_value=0, value=0, step=1)
     amount = col2.number_input("Tutar (TL)", min_value=0, value=0, step=1000)
 
-    bank_id = bank_options.get(selected_bank) if selected_bank != "Tümü" else None
-    results = client.compare(
-        term_months=term or None,
-        amount=amount or None,
-    )
-    if bank_id is not None:
-        results = [r for r in results if r.get("bank_name") == selected_bank]
+    col3, col4 = st.columns(2)
+    campaign_type = col3.text_input("Kampanya türü (opsiyonel)", "")
+    top_n = col4.slider("Gösterilecek kayıt", 1, 50, 10)
 
-    if results:
-        st.dataframe(results)
-    else:
+    try:
+        results = client.compare(
+            term_months=term or None,
+            amount=amount or None,
+            campaign_type=campaign_type or None,
+        )
+    except Exception as exc:  # hata kullanıcıya gösterilir, sessiz geçilmez
+        st.error(f"Karşılaştırma hatası: {exc}")
+        return
+
+    results = _filter_by_bank(results, selected_bank)[:top_n]
+
+    if not results:
         st.info("Filtrelere uyan kampanya bulunamadı.")
+        return
+
+    st.subheader("Kâr Payı Oranı Karşılaştırması")
+    chart_data = {
+        "Banka": [r["bank_name"] for r in results],
+        "Kâr Payı Oranı (%)": [r["profit_share_rate"] or 0 for r in results],
+    }
+    st.bar_chart(chart_data, x="Banka", y="Kâr Payı Oranı (%)")
+
+    st.subheader("Detaylı Tablo")
+    st.dataframe(results)
 
 
 def render_chatbot(client: ApiClient) -> None:
-    """RAG tabanlı chatbot sekmesini çizer."""
+    """Sohbet geçmişi ve kaynaklarla RAG chatbot sekmesini çizer."""
     st.header("Kampanya Asistanı (RAG Chatbot)")
-    question = st.text_input("Sorunuzu yazın")
-    if st.button("Gönder") and question:
-        try:
-            answer = client.chat(question)
-        except Exception as exc:  # kullanıcıya hata göster, sessiz geçme
-            st.error(f"Chatbot hatası: {exc}")
-            return
-        st.markdown(f"**Yanıt:** {answer.get('answer', '')}")
-        if answer.get("sources"):
-            st.subheader("Kaynaklar")
-            for src in answer["sources"]:
-                st.write(f"- {src.get('id')} ({src.get('source_url')})")
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    question = st.chat_input("Sorunuzu yazın")
+    if question:
+        st.session_state.messages.append({"role": "user", "content": question})
+        with st.chat_message("user"):
+            st.markdown(question)
+        with st.chat_message("assistant"):
+            try:
+                answer = client.chat(question)
+            except Exception as exc:  # hata kullanıcıya gösterilir
+                st.error(f"Chatbot hatası: {exc}")
+                return
+            st.markdown(answer.get("answer", ""))
+            st.session_state.messages.append(
+                {"role": "assistant", "content": answer.get("answer", "")}
+            )
+            if answer.get("sources"):
+                st.caption("Kaynaklar: " + ", ".join(
+                    str(s.get("id")) for s in answer["sources"]
+                ))
 
 
 def main() -> None:

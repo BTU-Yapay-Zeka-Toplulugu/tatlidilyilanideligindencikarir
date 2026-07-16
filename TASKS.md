@@ -74,7 +74,7 @@
 | Kişi 1 | Veri kalite kontrolü, eksik/edge-case veri toplama | [x] |
 | Kişi 2 | Kampanya sınıflandırma modeli, çıkarım doğruluğunun test edilmesi | [x] |
 | Kişi 3 | Karşılaştırma sorguları, vektör DB kurulumu (Chroma/FAISS) | [x] |
-| Kişi 4 | Dashboard tam işlevsel hale getirme, chatbot arayüz tasarımı | [ ] |
+| Kişi 4 | Dashboard tam işlevsel hale getirme, chatbot arayüz tasarımı | [x] |
 
 ### Hafta 4 (17–23 Ağu)
 
