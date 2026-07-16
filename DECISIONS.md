@@ -48,10 +48,10 @@ Format:
 
 ## ADR-004: Veri Deposu — PostgreSQL vs SQLite
 
-- **Tarih:** Açık — kick-off sonrası kesinleşecek
-- **Durum:** Beklemede (karar gerekiyor)
-- **Bağlam:** Hem PostgreSQL hem SQLite seçenek olarak planda yer alıyor.
-- **Karar:** (Henüz verilmedi — Kişi 3 tarafından proje ölçeği ve Docker Compose kaynak kısıtına göre karar verilecek.)
-- **Gerekçe:** SQLite prototipleme için daha hızlı kurulum sağlar; PostgreSQL çoklu kullanıcı/eşzamanlı erişimde daha sağlam.
-- **Alternatifler:** İkisi arasında geçiş kolay olacak şekilde ORM (SQLAlchemy) kullanılması öneriliyor.
-- **Sonuçlar:** İlk haftada (Hafta 1) DB şeması taslağı ile birlikte netleştirilmeli.
+- **Tarih:** 16 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** Hem PostgreSQL hem SQLite seçenek olarak planda yer alıyordu. Docker Compose ve on-premise kalıcılık/çoklu erişim desteği gereklilikleri bulunmaktaydı.
+- **Karar:** Veri tabanı olarak PostgreSQL seçilmiştir. SQLAlchemy ORM kullanılarak veritabanı işlemleri soyutlanacaktır.
+- **Gerekçe:** PostgreSQL, Docker ortamlarında ölçeklenebilir, eşzamanlı erişimde daha güvenlidir ve üretim ortamına uygundur. SQLAlchemy kullanımı ise gerektiğinde SQLite'a veya başka bir SQL veri tabanına geçişi kolaylaştırır.
+- **Alternatifler:** SQLite (prototipleme kolaylığı için düşünüldü ancak eşzamanlı yazma sınırları nedeniyle elendi).
+- **Sonuçlar:** Docker Compose dosyasına PostgreSQL servisi eklenmelidir. Veri saklama ve FastAPI backend işlemlerinde PostgreSQL bağlantısı kullanılacaktır.
