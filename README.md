@@ -67,20 +67,35 @@ katilim-bankaciligi-nlp/
 ├── PROGRESS.md             # Canlı durum takibi
 ├── DECISIONS.md            # ADR tarzı kararlar ve gerekçeleri
 ├── TASKS.md                # Görev listesi, sorumlu, durum
-├── docs/
+├── docks/
 │   ├── data-schema.md
 │   ├── api-spec.md
 │   └── nlp-approach.md
 ├── data/
 ├── src/
-│   ├── scraper/
-│   ├── nlp/
-│   ├── backend/
+│   ├── scraper/           # Veri toplama, temizleme
+│   ├── nlp/               # Ön işleme, bilgi çıkarımı, sınıflandırma
+│   ├── database/          # SQLAlchemy modelleri ve bağlantı
+│   ├── backend/           # FastAPI (api/routes, services, repositories, core)
+│   │   ├── api/routes/    # İnce route handler'lar
+│   │   ├── services/      # İş mantığı (comparison, chatbot, campaign)
+│   │   ├── repositories/  # DB erişim (Repository Pattern)
+│   │   └── core/          # config, db, embeddings, vector_store, llm_factory
 │   └── frontend/
 ├── tests/
-├── docker-compose.yml
+├── docker-compose.yml     # db + ollama + backend
+├── Dockerfile
+├── requirements.txt
 └── .env.example
 ```
+
+### Backend API
+
+FastAPI ile katmanlı mimari (Repository / Service / Factory / DI). Tüm uç
+noktalar `docks/api-spec.md` içinde belgelenmiştir; canlı Swagger arayüzü
+`uvicorn src.backend.main:app --reload` sonrası `http://localhost:8000/docs`
+adresindedir. RAG chatbot (`/api/chat`) vektör arama + yerel LLM (Ollama)
+kullanır; tamamen çevrimdışı çalışır.
 
 ## Ekip
 

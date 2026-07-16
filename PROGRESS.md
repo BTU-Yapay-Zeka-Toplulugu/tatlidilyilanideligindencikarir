@@ -42,6 +42,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | RAG chatbot backend'i (/api/chat), Docker Compose (db+ollama+backend) ve Dockerfile, requirements.txt, performans testleri | src/backend/services/chatbot_service.py, src/backend/api/routes/chat.py, docker-compose.yml, Dockerfile, requirements.txt, tests/test_backend/test_chatbot.py, tests/test_backend/test_performance.py | tamamlandı
 
+- 2026-07-16 | API dokümantasyonu (docks/api-spec.md) yazıldı, tüm sistem testleri çalıştırıldı (99 passed), GitHub dokümantasyonu güncellendi | docks/api-spec.md, README.md, PROGRESS.md | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)
