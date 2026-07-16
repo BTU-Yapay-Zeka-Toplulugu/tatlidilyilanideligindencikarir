@@ -38,13 +38,13 @@ Format:
 
 ## ADR-003: Yerel LLM Seçimi
 
-- **Tarih:** Açık — henüz kesinleşmedi
-- **Durum:** Beklemede (karar gerekiyor)
-- **Bağlam:** Ollama üzerinden çalıştırılacak Türkçe/multilingual açık kaynak modelin hangisi olacağı netleşmedi.
-- **Karar:** (Henüz verilmedi)
-- **Gerekçe:** (Kick-off sonrası Kişi 2/3 tarafından donanım kısıtları ve Türkçe performansına göre belirlenecek.)
-- **Alternatifler:** Değerlendirilecek adaylar: Türkçe fine-tune edilmiş Llama/Mistral varyantları, multilingual modeller (Ollama kütüphanesinde mevcut olanlar).
-- **Sonuçlar:** Bu karar netleşene kadar `src/nlp/` modülü model-agnostik bir arayüz (interface) ile yazılmalı.
+- **Tarih:** 16 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** Ollama üzerinden çalıştırılacak Türkçe/multilingual açık kaynak modelin hangisi olacağı netleşmemişti.
+- **Karar:** Model doğrudan **llama.cpp (llama-cpp-python)** ile çalıştırılır; Ollama sunucusu kullanılmaz. Test/model için seçilen model: **`qwen2.5-3b-instruct-q4_k_m.gguf`** (Qwen2.5 3B, Q4_K_M quantized, multilingual/TR dostu, çevrimdışı). Model dosyası `model/` dizinine konur ve `LOCAL_MODEL_PATH` (`.env`) ile gösterilir; dizin ise içindeki ilk `.gguf` otomatik yüklenir. Daha iyi bir model için sadece yeni `.gguf` `model/` altına bırakılır.
+- **Gerekçe:** llama.cpp saf Python + C binding ile çevrimdışı, açık kaynak ve hızlıdır; Ollama'ya bağımlılık gerektirmez. `LLMClientFactory` (auto→gguf) ile model değişimi kodsuz yapılır (ADR-003 sonucu karşılandı).
+- **Alternatifler:** Ollama (ayrı servis/indirme gerektirir; elendi), Türkçe Llama/Mistral fine-tune (ileride `model/` altına GGUF olarak eklenebilir), HuggingFace üzerinden ağırlık indirme (internet bağımlılığı yasağı gereği elendi).
+- **Sonuçlar:** `src/backend/core/llm_factory.py` → `GgufLLMClient` (llama.cpp) eklendi; `LLM_BACKEND=auto|gguf|ollama` desteği. `requirements.txt`'e `llama-cpp-python` eklendi. Chatbot için instruct şablonu (`<|im_start|>`/`) kullanılır.
 
 ## ADR-004: Veri Deposu — PostgreSQL vs SQLite
 

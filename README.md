@@ -52,7 +52,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Modeller %100 çevrimdışı çalışır: kullanılacak yerel model(ler) önceden `data/models/` klasörüne manuel olarak konulmalı ve `.env` içindeki `LOCAL_MODEL_PATH` değişkeni bu konumu göstermelidir. Hiçbir kütüphane/ajan internetten model indirmeye teşebbüs etmemelidir.
+Modeller %100 çevrimdışı çalışır: kullanılacak yerel model(ler) `model/` dizinine (`.gguf` olarak) konulur ve `.env` içindeki `LOCAL_MODEL_PATH` değişkeni bu yolu gösterir. Dizin ise içindeki ilk `.gguf` otomatik yüklenir — daha iyi bir model için sadece yeni `.gguf` dosyasını `model/` altına bırakın. LLM, **llama.cpp** (`llama-cpp-python`) ile doğrudan çalıştırılır; Ollama gerektirmez. Mevcut test modeli: `qwen2.5-3b-instruct-q4_k_m.gguf`. Hiçbir kütüphane/ajan internetten model indirmeye teşebbüs etmemelidir.
 
 ## Çalıştırma
 

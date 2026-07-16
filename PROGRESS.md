@@ -60,6 +60,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | README finalize (kurulum/çalıştırma, teslim durumu tablosu) ve ADR-007 (video/sunum insan işi) eklendi | README.md, DECISIONS.md, TASKS.md | tamamlandı
 
+- 2026-07-16 | Yerel LLM olarak qwen2.5-3b-instruct GGUF modeli llama.cpp ile entegre edildi; model/ dizinine taşındı, LLMClientFactory GGUF desteği eklenedi, ADR-003 kesinleştirildi | src/backend/core/llm_factory.py, src/backend/core/config.py, src/backend/services/chatbot_service.py, model/, .env, requirements.txt, DECISIONS.md, README.md | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)

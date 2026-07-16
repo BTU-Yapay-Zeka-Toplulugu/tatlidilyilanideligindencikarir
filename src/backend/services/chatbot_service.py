@@ -15,13 +15,22 @@ class ChatbotService:
         self.llm = llm or LLMClientFactory.create()
 
     def _build_prompt(self, question: str, contexts: list[str]) -> str:
-        """Retrieval bağlamından LLM için bir istem metni oluşturur."""
+        """Retrieval bağlamından instruct uyumlu bir istem metni oluşturur."""
         context_block = "\n\n".join(f"- {c}" for c in contexts) if contexts else "(bağlam bulunamadı)"
-        return (
-            "Aşağıdaki katılım bankası kampanya bilgilerini kullanarak "
-            "soruyu Türkçe ve kısa şekilde yanıtla.\n\n"
+        system = (
+            "Sen bir katılım bankası kampanya asistanısın. Yalnızca verilen "
+            "bağlamdaki bilgilere dayanarak Türkçe ve kısa yanıt ver."
+        )
+        user = (
             f"BAĞLAM:\n{context_block}\n\n"
-            f"SORU: {question}\n\nYANIT:"
+            f"SORU: {question}"
+        )
+        return (
+            "<|im_start|>system\n"
+            f"{system}<|im_end|>\n"
+            "<|im_start|>user\n"
+            f"{user}<|im_end|>\n"
+            "<|im_start|>assistant\n"
         )
 
     def answer(self, question: str, top_k: int = 3) -> dict[str, Any]:

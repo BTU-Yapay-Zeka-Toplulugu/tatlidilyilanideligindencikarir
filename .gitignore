@@ -43,3 +43,7 @@ data/raw/*
 # Scraper processed data
 data/processed/*
 !data/processed/.gitkeep
+
+# Yerel modeller (büyük ikili dosyalar, repoya eklenmez)
+model/
+*.gguf
