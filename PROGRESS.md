@@ -40,6 +40,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | Karşılaştırma sorguları (tür filtresi, best-rate) ve vektör DB (Chroma + InMemory fallback) kurulumu, RAG arama uç noktası | src/backend/core/{embeddings,vector_store}.py, src/backend/services/comparison_service.py, src/backend/api/routes/{compare,search}.py, tests/test_backend/test_vector_store.py, tests/test_backend/conftest.py, DECISIONS.md | tamamlandı
 
+- 2026-07-16 | RAG chatbot backend'i (/api/chat), Docker Compose (db+ollama+backend) ve Dockerfile, requirements.txt, performans testleri | src/backend/services/chatbot_service.py, src/backend/api/routes/chat.py, docker-compose.yml, Dockerfile, requirements.txt, tests/test_backend/test_chatbot.py, tests/test_backend/test_performance.py | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)

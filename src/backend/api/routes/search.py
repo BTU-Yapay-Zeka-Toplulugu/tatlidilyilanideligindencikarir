@@ -6,22 +6,11 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from src.backend.core.database import get_db
-from src.backend.core.vector_store import VectorStore, VectorStoreFactory
+from src.backend.core.vector_store import VectorStore, get_vector_store
 from src.backend.repositories.campaign_repository import CampaignRepository
 from src.backend.services.campaign_service import CampaignService
 
 router = APIRouter(prefix="/api", tags=["search"])
-
-# Uygulama ömrü boyunca tek bir vektör deposu (basit singleton).
-_STORE: VectorStore | None = None
-
-
-def get_vector_store() -> VectorStore:
-    """Vektör deposunu (yoksa bellek içi olarak) döner."""
-    global _STORE
-    if _STORE is None:
-        _STORE = VectorStoreFactory.create(kind="memory")
-    return _STORE
 
 
 def _campaign_service(db: Session = Depends(get_db)) -> CampaignService:

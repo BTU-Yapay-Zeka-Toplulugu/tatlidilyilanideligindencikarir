@@ -1,0 +1,17 @@
+# Proje Python bağımlılıkları (tamamen açık kaynak, çevrimdışı çalışabilir)
+fastapi
+uvicorn[standard]
+sqlalchemy>=2.0
+psycopg2-binary
+pydantic>=2.0
+python-dotenv
+requests
+beautifulsoup4
+lxml
+scikit-learn
+numpy
+scipy
+chromadb
+ollama
+sentence-transformers
+pytest

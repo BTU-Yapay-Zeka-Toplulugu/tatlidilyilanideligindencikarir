@@ -119,3 +119,14 @@ class VectorStoreFactory:
                 embedder=kwargs.get("embedder"),
             )
         return InMemoryVectorStore(embedder=kwargs.get("embedder"))
+
+
+_STORE: VectorStore | None = None
+
+
+def get_vector_store() -> VectorStore:
+    """Uygulama ömrü boyunca paylaşılan vektör deposunu döner (DI için)."""
+    global _STORE
+    if _STORE is None:
+        _STORE = VectorStoreFactory.create(kind="memory")
+    return _STORE
