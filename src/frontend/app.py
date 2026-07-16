@@ -1,5 +1,14 @@
 """Katılım Bankası kampanya dashboard + chatbot Streamlit ön yüzü."""
 
+import sys
+from pathlib import Path
+
+# Streamlit betiği doğrudan çalıştırıldığında repo kökünü sys.path'e ekler
+# (böylece `src` paketi bulunur).
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 from typing import Any
 
 import streamlit as st
