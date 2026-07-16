@@ -14,7 +14,7 @@
 - [x] Bilgi çıkarımı: kâr payı oranı, vade, tutar, tarih, avantaj tespiti (kural tabanlı + NER)
 - [x] Format standardizasyonu (%2,05 / 2.05% / 500 TL / 500₺ gibi varyasyonların birleştirilmesi)
 - [x] Kampanya türü sınıflandırma modeli
-- [ ] Model performans değerlendirmesi (varsa test seti ile doğruluk ölçümü)
+- [x] Model performans değerlendirmesi (varsa test seti ile doğruluk ölçümü)
 
 ### Kişi 3 — Backend / Sistem Mühendisi
 - [ ] FastAPI backend endpoint'leri (veri okuma, karşılaştırma sorguları)
