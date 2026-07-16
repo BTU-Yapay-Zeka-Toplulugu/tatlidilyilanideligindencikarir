@@ -10,7 +10,7 @@
 - [x] Veri kalitesi kontrolleri ve periyodik yeniden tarama (crawl) süreci
 
 ### Kişi 2 — NLP / Model Mühendisi
-- [ ] Metin ön işleme pipeline'ı (temizleme, tokenizasyon, normalizasyon)
+- [x] Metin ön işleme pipeline'ı (temizleme, tokenizasyon, normalizasyon)
 - [ ] Bilgi çıkarımı: kâr payı oranı, vade, tutar, tarih, avantaj tespiti (kural tabanlı + NER)
 - [ ] Format standardizasyonu (%2,05 / 2.05% / 500 TL / 500₺ gibi varyasyonların birleştirilmesi)
 - [ ] Kampanya türü sınıflandırma modeli
@@ -54,7 +54,7 @@
 | Kişi | Görev | Durum |
 | --- | --- | --- |
 | Kişi 1 | BDDK banka listesi taraması, scraper iskeleti, ilk veri toplama | [x] |
-| Kişi 2 | Ön işleme pipeline tasarımı, terminoloji sözlüğü (kâr payı, finansman vb.) oluşturma | [ ] |
+| Kişi 2 | Ön işleme pipeline tasarımı, terminoloji sözlüğü (kâr payı, finansman vb.) oluşturma | [x] |
 | Kişi 3 | Teknoloji seçimi, DB şeması taslağı, FastAPI proje iskeleti | [ ] |
 | Kişi 4 | UI/UX tasarımı, dashboard/chatbot iskelet arayüz | [ ] |
 
