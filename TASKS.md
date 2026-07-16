@@ -11,7 +11,7 @@
 
 ### Kişi 2 — NLP / Model Mühendisi
 - [x] Metin ön işleme pipeline'ı (temizleme, tokenizasyon, normalizasyon)
-- [ ] Bilgi çıkarımı: kâr payı oranı, vade, tutar, tarih, avantaj tespiti (kural tabanlı + NER)
+- [x] Bilgi çıkarımı: kâr payı oranı, vade, tutar, tarih, avantaj tespiti (kural tabanlı + NER)
 - [ ] Format standardizasyonu (%2,05 / 2.05% / 500 TL / 500₺ gibi varyasyonların birleştirilmesi)
 - [ ] Kampanya türü sınıflandırma modeli
 - [ ] Model performans değerlendirmesi (varsa test seti ile doğruluk ölçümü)
@@ -63,7 +63,7 @@
 | Kişi | Görev | Durum |
 | --- | --- | --- |
 | Kişi 1 | Veri setinin genişletilmesi, temizleme, DB'ye ilk yükleme | [ ] |
-| Kişi 2 | Bilgi çıkarımı kural tabanlı prototip + normalizasyon fonksiyonları | [ ] |
+| Kişi 2 | Bilgi çıkarımı kural tabanlı prototip + normalizasyon fonksiyonları | [x] |
 | Kişi 3 | API endpoint'leri (CRUD, listeleme), DB entegrasyonu | [ ] |
 | Kişi 4 | Backend API ile dashboard iskeletinin bağlanması | [ ] |
 
