@@ -50,6 +50,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | Dashboard tam işlevsel hale getirildi (filtreler, bar grafik, kayıt sınırı) ve chatbot arayüzü sohbet geçmişi/kaynaklarla zenginleştirildi | src/frontend/app.py, src/frontend/ui_helpers.py, tests/test_frontend/test_app.py | tamamlandı
 
+- 2026-07-16 | Chatbot arayüz entegrasyonu ve uçtan uca (scraper→NLP→backend→frontend) entegrasyon testi; LLM yokken chatbot zarifçe düşen fallback eklendi | tests/test_frontend/test_e2e.py, src/backend/services/chatbot_service.py | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)

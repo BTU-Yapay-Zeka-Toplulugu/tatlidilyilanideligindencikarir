@@ -28,12 +28,17 @@ class ChatbotService:
         """Soruyu yanıtlar ve kullanılan kaynakları döner."""
         retrieved = self.vector_store.query(question, top_k=top_k)
         contexts = [r["text"] for r in retrieved]
+        sources = [
+            {"id": r["id"], "source_url": r.get("metadata", {}).get("source_url"), "score": r["score"]}
+            for r in retrieved
+        ]
         prompt = self._build_prompt(question, contexts)
-        generated = self.llm.generate(prompt)
-        return {
-            "answer": generated,
-            "sources": [
-                {"id": r["id"], "source_url": r.get("metadata", {}).get("source_url"), "score": r["score"]}
-                for r in retrieved
-            ],
-        }
+        try:
+            generated = self.llm.generate(prompt)
+        except Exception as exc:  # LLM çevrimdışı/eksikse kaynaklarla zarifçe düş
+            generated = (
+                "Yerel LLM şu anda kullanılamıyor (model yüklenmemiş olabilir). "
+                f"İlgili kampanya bağlamı {len(contexts)} kayıtta bulundu."
+            )
+            sources.append({"note": f"llm_error: {exc}"})
+        return {"answer": generated, "sources": sources}
