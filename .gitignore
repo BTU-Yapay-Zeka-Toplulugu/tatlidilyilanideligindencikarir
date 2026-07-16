@@ -39,3 +39,7 @@ venv.bak/
 # Scraper raw data (keep the directory but ignore run-specific massive JSON/CSV)
 data/raw/*
 !data/raw/.gitkeep
+
+# Scraper processed data
+data/processed/*
+!data/processed/.gitkeep
