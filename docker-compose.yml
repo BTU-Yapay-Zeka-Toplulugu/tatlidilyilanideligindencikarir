@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: katilim_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-katilim_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-katilim_password}
+      POSTGRES_DB: ${DB_NAME:-katilim_db}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

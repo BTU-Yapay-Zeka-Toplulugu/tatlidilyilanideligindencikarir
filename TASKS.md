@@ -6,7 +6,7 @@
 - [x] BDDK listesindeki katılım bankalarının web sitelerinin taranması
 - [x] Scraper geliştirme (Python), kampanya/ürün metinlerinin toplanması
 - [x] Ham verinin temizlenmesi, veri seti (CSV/JSON) oluşturulması
-- [ ] Veritabanı şeması tasarımı ve kurulumu
+- [x] Veritabanı şeması tasarımı ve kurulumu
 - [ ] Veri kalitesi kontrolleri ve periyodik yeniden tarama (crawl) süreci
 
 ### Kişi 2 — NLP / Model Mühendisi
