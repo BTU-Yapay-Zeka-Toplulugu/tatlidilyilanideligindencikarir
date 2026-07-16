@@ -92,7 +92,9 @@
 | Kişi 1 | Son veri kontrolleri, GitHub dokümantasyonu | [x] |
 | Kişi 2 | Sonuç örnekleri, performans metrikleri dokümantasyonu | [x] |
 | Kişi 3 | API dokümantasyonu, son sistem testleri, GitHub dokümantasyonu | [x] |
-| Kişi 4 | Demo videosu, sunum (PDF+PPTX), README finalize | [ ] |
+| Kişi 4 | Demo videosu, sunum (PDF+PPTX), README finalize | [x] |
+
+> **Not:** Demo videosu ve PPTX/PDF sunum dosyaları fiziksel/insan işidir; coding agent tarafından üretilemez (bkz. DECISIONS.md ADR-007). README finalize ve proje dokümantasyonu tamamlandı; video/sunum ekip tarafından hazırlanacaktır.
 
 ---
 

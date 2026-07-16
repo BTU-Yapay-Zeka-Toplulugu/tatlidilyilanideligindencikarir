@@ -54,7 +54,52 @@ docker compose up --build
 
 Modeller %100 çevrimdışı çalışır: kullanılacak yerel model(ler) önceden `data/models/` klasörüne manuel olarak konulmalı ve `.env` içindeki `LOCAL_MODEL_PATH` değişkeni bu konumu göstermelidir. Hiçbir kütüphane/ajan internetten model indirmeye teşebbüs etmemelidir.
 
-Detaylı kurulum ve çalıştırma talimatları eklendikçe burada güncellenecektir.
+## Çalıştırma
+
+### Tüm Sistem (Docker Compose)
+
+```bash
+conda activate katilim-nlp
+cp .env.example .env
+docker compose up --build
+```
+
+Bu komut PostgreSQL, Ollama (yerel LLM) ve FastAPI backend servislerini ayağa kaldırır. Backend Swagger arayüzü: `http://localhost:8000/docs`.
+
+### Sadece Backend (yerel)
+
+```bash
+conda activate katilim-nlp
+uvicorn src.backend.main:app --reload
+```
+
+### Dashboard + Chatbot (Streamlit ön yüz)
+
+```bash
+conda activate katilim-nlp
+streamlit run src/frontend/app.py
+```
+
+### Testler
+
+```bash
+pytest tests/
+```
+
+## Teslim Edilecekler Durumu
+
+| Teslim Kalemi | Durum |
+| --- | --- |
+| Kaynak kod (GitHub, Apache 2.0, `BilisimVadisi2026` etiketli) | ✅ Tamamlandı |
+| Kurulum/çalıştırma talimatları (README) | ✅ Bu dosya |
+| Demo videosu (maks. 5 dk) | ⏳ Ekip tarafından çekilecek (agent üretemez) |
+| Proje dokümantasyonu (mimari, NLP, veri, karşılaştırma, sonuçlar) | ✅ `docks/` altında |
+| Sunum materyali (PDF + PPTX) | ⏳ Ekip tarafından hazırlanacak (agent üretemez) |
+| Haftalık GitHub güncellemeleri | ✅ Her görev sonrası commit edildi |
+
+> Not: Demo videosu ve sunum dosyaları (PDF/PPTX) fiziksel/insan işidir; coding
+> agent tarafından otomatik üretilemez. Gerekli içerik (ekran akışı senaryosu,
+> anlatım taslağı) `docks/` dokümanlarından ve bu README'den türetilebilir.
 
 ## Repo Yapısı
 

@@ -58,6 +58,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | Son veri kalitesi kontrolü yapıldı (121 kayıt, 9 banka, eksik başlık/boş içerik yok); GitHub dokümantasyonu (CONTRIBUTING.md) eklendi | CONTRIBUTING.md, PROGRESS.md | tamamlandı
 
+- 2026-07-16 | README finalize (kurulum/çalıştırma, teslim durumu tablosu) ve ADR-007 (video/sunum insan işi) eklendi | README.md, DECISIONS.md, TASKS.md | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)

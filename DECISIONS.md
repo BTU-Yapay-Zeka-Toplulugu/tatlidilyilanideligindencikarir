@@ -75,3 +75,13 @@ Format:
 - **Gerekçe:** Sıfır frontend build adımı, hızlı prototip, Python ekibi için düşük öğrenme eğrisi; tamamen açık kaynak ve on-premise. Gerekirse ileride React'e geçiş için arayüz API üzerinden ayrık tutulur.
 - **Alternatifler:** React + Recharts/Plotly (daha üretim kaliteli ama ayrı build zinciri/JS ekibi gerektirir; elendi).
 - **Sonuçlar:** `src/frontend/` altına Streamlit uygulaması (`app.py`) yazılacak; `requirements.txt`'e `streamlit`, `plotly` eklenecek.
+
+## ADR-007: Demo Videosu ve Sunum (PDF/PPTX) Üretimi
+
+- **Tarih:** 16 Temmuz 2026
+- **Durum:** Kabul edildi (kapsam sınırı)
+- **Bağlam:** TASKS.md Hafta 5, Kişi 4 "Demo videosu çekimi ve sunum (PDF+PPTX) hazırlığı" maddesi, fiziksel/insan işi gerektirir; bir coding agent video çekemez ve binary sunum dosyası üretemez.
+- **Karar:** Agent; README finalize, proje dokümantasyonu (`docks/`) ve kaynak kodu tamamlar. Demo videosu ve PPTX/PDF sunum dosyaları **ekip tarafından manuel** hazırlanır. Gerekli anlatım içeriği dokümantasyonlardan türetilebilir şekilde bırakılır.
+- **Gerekçe:** Üretim dışı binary varlıkları otomatik üretmek mümkün değil; yarışma teslimi için insan onayı gereklidir.
+- **Alternatifler:** Yok (fiziksel kısıt).
+- **Sonuçlar:** README "Teslim Edilecekler Durumu" tablosunda bu kalemler "ekip tarafından tamamlanacak" olarak işaretlendi.
