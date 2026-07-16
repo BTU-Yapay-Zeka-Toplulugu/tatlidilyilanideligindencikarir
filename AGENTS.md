@@ -50,3 +50,4 @@ docker compose up --build
 - `DECISIONS.md` — alınan kararlar ve gerekçeleri
 - `TASKS.md` — görev takvimi
 - `docs/data-schema.md`, `docs/api-spec.md`, `docs/nlp-approach.md`
+- `data/bank_sites.txt` — BDDK listesindeki katılım bankalarının isimleri ve web sitelerinin linkleri(example: 1. ADİL KATILIM BANKASI A.Ş. - https://www.adilkatilim.com.tr/)

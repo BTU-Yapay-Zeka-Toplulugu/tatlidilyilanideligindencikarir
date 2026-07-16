@@ -15,6 +15,7 @@
 
 ## Bugün / Bu Oturumda Yapılanlar
 
+- 16.07.2026 | Veri kalitesi denetim scripti (check_data_quality.py) yazıldı ve çalıştırıldı. Hafta 1 görevleri tamamlandı | src/scraper/check_data_quality.py, TASKS.md | tamamlandı
 - 16.07.2026 | İlk veri toplama işlemi 10 banka için tamamlandı, veriler data/raw altına kaydedildi | data/raw/ | tamamlandı
 - 16.07.2026 | Scraper politeness, 404 hata yönetimi ve sayfa limiti (MAX_PAGES_PER_BANK) eklendi | src/scraper/config.py, src/scraper/http_client.py, src/scraper/discovery.py | tamamlandı
 - 16.07.2026 | BDDK banka listesi data/ altına taşındı, URL'ler test edilip düzeltildi | data/bank_sites.txt, src/scraper/config.py, src/scraper/check_bank_urls.py | tamamlandı

@@ -42,12 +42,17 @@ Detaylar için `ARCHITECTURE.md` dosyasına bakın.
 
 ## Kurulum
 
+> **Not:** Bu proje sıfırdan bir Python/conda ortamı oluşturmaz. Hazırda var olan `katilim-nlp` conda ortamı İSTİSNASIZ olarak kullanılmalıdır.
+
 ```bash
 git clone <repo-url>
 cd katilim-bankaciligi-nlp
+conda activate katilim-nlp
 cp .env.example .env
 docker compose up --build
 ```
+
+Modeller %100 çevrimdışı çalışır: kullanılacak yerel model(ler) önceden `data/models/` klasörüne manuel olarak konulmalı ve `.env` içindeki `LOCAL_MODEL_PATH` değişkeni bu konumu göstermelidir. Hiçbir kütüphane/ajan internetten model indirmeye teşebbüs etmemelidir.
 
 Detaylı kurulum ve çalıştırma talimatları eklendikçe burada güncellenecektir.
 

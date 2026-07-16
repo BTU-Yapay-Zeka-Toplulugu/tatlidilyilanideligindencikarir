@@ -15,6 +15,15 @@ Katılım bankalarının kampanya metinlerinden NLP ile bilgi çıkaran (kâr pa
 - **İnternet bağımlılığı ekleme.** Sistem tamamen on-premise / Docker Compose ile kurum içi çalışabilmeli.
 - Bu kısıtlardan biri ihlal edilecek gibiyse, kodu yazmadan önce dur ve bunu `PROGRESS.md`'ye "bilinen sorun / karar gerekiyor" olarak not et.
 
+## 🔒 %100 ÇEVRİMDIŞI MODEL KURALI (ON-PREMISE)
+
+DİKKAT: Proje kapalı ağda çalışmaktadır. Transformers, HuggingFace veya herhangi bir kütüphane aracılığıyla internet üzerinden model/ağırlık (weights) indirmeye çalışmak KESİNLİKLE YASAKTIR. Modellerin internet bağlantısı ile indirilmesi engellenmiştir. Ajan, modelin kullanıcı tarafından önceden `data/models/` klasörüne konduğunu ve buradan çevrimdışı olarak yükleneceğini varsayarak kod yazacaktır. Model yolu her zaman `.env` dosyasındaki `LOCAL_MODEL_PATH` değişkeninden okunmalıdır.
+
+## ⚙️ Ortam Kuralı
+
+- Proje ve tüm kodlar İSTİSNASIZ olarak sadece `conda activate katilim-nlp` komutu ile mevcut/hazır ortamda çalıştırılır.
+- Sıfırdan ortam oluşturma (`conda create`, `python -m venv` vb.) komutları kullanılmaz ve dokümantasyona eklenmez.
+
 ## Teknoloji Stack (kesin, değiştirme)
 
 | Katman | Teknoloji |
@@ -42,7 +51,8 @@ tests/          → her modül için testler
 ## Kod Konvansiyonları
 
 - Python: PEP8, tip ipuçları (type hints) kullan.
-- **Her fonksiyonun/metodun üzerinde tek satırlık açıklayıcı docstring/yorum olmalı** — ne yaptığını özetleyen, kısa ve net (örn. `"""Kâr payı oranını metinden ayıklayıp standart float formata çevirir."""`). Uzun paragraf docstring yazma, tek satır yeterli.
+- Kodlar Design Patterns kullanılarak, API mimarisi şeklinde ve Clean Code prensiplerine uygun yazılacaktır.
+- **İSTİSNASIZ olarak her fonksiyonun/metodun hemen üstünde, sadece ne yaptığını açıklayan TEK SATIRLIK kısa bir docstring/yorum bulunmak zorundadır** (örn. `"""Kâr payı oranını metinden ayıklayıp standart float formata çevirir."""`). Uzun paragraf docstring yazma, tek satır yeterli.
 - Commit mesajları: `[kişiX] kısa açıklama` formatında (örn. `[kişi2] normalizasyon fonksiyonu eklendi`).
 - Her yeni modül için `tests/` altında en az temel bir test yaz.
 - Format standardizasyonu kritik: `%2,05 / 2.05% / 500 TL / 500₺` gibi varyasyonlar birleştirilmeli — bkz. `docs/nlp-approach.md`.

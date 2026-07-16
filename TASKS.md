@@ -3,8 +3,8 @@
 ## Ekip Rolleri ve Birincil Sorumluluklar
 
 ### Kişi 1 — Veri Mühendisi (Data Collection)
-- [ ] BDDK listesindeki katılım bankalarının web sitelerinin taranması
-- [ ] Scraper geliştirme (Python), kampanya/ürün metinlerinin toplanması
+- [x] BDDK listesindeki katılım bankalarının web sitelerinin taranması
+- [x] Scraper geliştirme (Python), kampanya/ürün metinlerinin toplanması
 - [ ] Ham verinin temizlenmesi, veri seti (CSV/JSON) oluşturulması
 - [ ] Veritabanı şeması tasarımı ve kurulumu
 - [ ] Veri kalitesi kontrolleri ve periyodik yeniden tarama (crawl) süreci
@@ -53,7 +53,7 @@
 
 | Kişi | Görev | Durum |
 | --- | --- | --- |
-| Kişi 1 | BDDK banka listesi taraması, scraper iskeleti, ilk veri toplama | [ ] |
+| Kişi 1 | BDDK banka listesi taraması, scraper iskeleti, ilk veri toplama | [x] |
 | Kişi 2 | Ön işleme pipeline tasarımı, terminoloji sözlüğü (kâr payı, finansman vb.) oluşturma | [ ] |
 | Kişi 3 | Teknoloji seçimi, DB şeması taslağı, FastAPI proje iskeleti | [ ] |
 | Kişi 4 | UI/UX tasarımı, dashboard/chatbot iskelet arayüz | [ ] |
