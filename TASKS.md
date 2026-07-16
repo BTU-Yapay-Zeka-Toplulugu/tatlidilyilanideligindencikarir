@@ -12,7 +12,7 @@
 ### Kişi 2 — NLP / Model Mühendisi
 - [x] Metin ön işleme pipeline'ı (temizleme, tokenizasyon, normalizasyon)
 - [x] Bilgi çıkarımı: kâr payı oranı, vade, tutar, tarih, avantaj tespiti (kural tabanlı + NER)
-- [ ] Format standardizasyonu (%2,05 / 2.05% / 500 TL / 500₺ gibi varyasyonların birleştirilmesi)
+- [x] Format standardizasyonu (%2,05 / 2.05% / 500 TL / 500₺ gibi varyasyonların birleştirilmesi)
 - [ ] Kampanya türü sınıflandırma modeli
 - [ ] Model performans değerlendirmesi (varsa test seti ile doğruluk ölçümü)
 
