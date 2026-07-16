@@ -26,13 +26,16 @@ class ComparisonService:
         self,
         term_months: int | None = None,
         amount: float | None = None,
+        campaign_type: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Filtrelere uyan mevduat kampanyalarını orana göre sıralayıp döner."""
+        """Filtrelere uyan kampanyaları orana göre sıralayıp döner."""
         campaigns = self.campaign_service.list_campaigns()
         results: list[dict[str, Any]] = []
 
         for campaign in campaigns:
             detail = self.campaign_service.ensure_nlp_processed(campaign)
+            if campaign_type is not None and detail.campaign_type != campaign_type:
+                continue
             if detail.campaign_type != COMPARABLE_CAMPAIGN_TYPE:
                 continue
             if term_months is not None and detail.term_months is not None:
@@ -61,3 +64,10 @@ class ComparisonService:
 
         results.sort(key=lambda x: x["profit_share_rate"] or 0.0, reverse=True)
         return results
+
+    def best_rate(self, campaign_type: str | None = None) -> dict[str, Any] | None:
+        """En yüksek kâr payı oranına sahip kampanyayı döner."""
+        comparison = self.compare(campaign_type=campaign_type)
+        if not comparison:
+            return None
+        return comparison[0]

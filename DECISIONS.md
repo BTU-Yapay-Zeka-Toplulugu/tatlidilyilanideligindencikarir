@@ -55,3 +55,13 @@ Format:
 - **Gerekçe:** PostgreSQL, Docker ortamlarında ölçeklenebilir, eşzamanlı erişimde daha güvenlidir ve üretim ortamına uygundur. SQLAlchemy kullanımı ise gerektiğinde SQLite'a veya başka bir SQL veri tabanına geçişi kolaylaştırır.
 - **Alternatifler:** SQLite (prototipleme kolaylığı için düşünüldü ancak eşzamanlı yazma sınırları nedeniyle elendi).
 - **Sonuçlar:** Docker Compose dosyasına PostgreSQL servisi eklenmelidir. Veri saklama ve FastAPI backend işlemlerinde PostgreSQL bağlantısı kullanılacaktır.
+
+## ADR-005: Vektör Veritabanı — Chroma (RAG için)
+
+- **Tarih:** 16 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** RAG tabanlı chatbot için açık kaynak, on-premise çalışabilen bir vektör DB gerekiyordu (ADR-003 bağlamı). TASKS.md Chroma/FAISS seçeneklerini sunuyordu; net karar yoktu.
+- **Karar:** Vektör DB olarak **Chroma** seçilmiştir. Üretimde diskte kalıcı (`PersistentClient`) kullanılır. Test/prototip için harici bağımlılık gerektirmeyen saf-Python `InMemoryVectorStore` (sklearn cosine similarity) varsayılan olarak kullanılır.
+- **Gerekçe:** Chroma; metadata filtreleme, diskte kalıcılık ve Python ile kolay entegrasyon sunar, tamamen açık kaynak ve on-premise'dir. Embedding üretimi için `LOCAL_MODEL_PATH` (ADR-003) üzerinden çevrimdışı `sentence-transformers` modeli kullanılır; harici indirme olmadan çalışması için varsayılan olarak çevrimdışı `LocalLexicalEmbedder` (bag-of-words) sağlanmıştır.
+- **Alternatifler:** FAISS (düşük seviyeli, kalıcılık/metadata yöneticisi manuel; elendi), Pinecone (ücretli/bulut; ADR-001 gereği elendi).
+- **Sonuçlar:** `src/backend/core/vector_store.py` (VectorStoreFactory + Chroma/InMemory) ve `src/backend/core/embeddings.py` (Embedder arayüzü) oluşturuldu. Docker imajına `chromadb` bağımlılığı eklenmelidir.

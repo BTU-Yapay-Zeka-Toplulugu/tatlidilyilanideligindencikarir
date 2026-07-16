@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.backend.api.routes.campaigns import router as campaigns_router
 from src.backend.api.routes.compare import router as compare_router
+from src.backend.api.routes.search import router as search_router
 from src.backend.core.database import ensure_schema, get_db
 
 
@@ -34,6 +35,7 @@ app.add_middleware(
 
 app.include_router(campaigns_router)
 app.include_router(compare_router)
+app.include_router(search_router)
 
 
 @app.get("/")

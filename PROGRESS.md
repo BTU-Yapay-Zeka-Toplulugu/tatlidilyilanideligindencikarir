@@ -38,6 +38,8 @@ _(Her oturum sonunda bu bölüme yeni bir madde ekle, en yeni en üstte.)_
 
 - 2026-07-16 | API endpoint'leri CRUD + listeleme + DB entegrasyonu (banka/kampanya oluştur/güncelle/sil) | src/backend/api/routes/campaigns.py, src/backend/repositories/campaign_repository.py, src/backend/services/campaign_service.py, src/backend/schemas.py, tests/test_backend/test_api.py | tamamlandı
 
+- 2026-07-16 | Karşılaştırma sorguları (tür filtresi, best-rate) ve vektör DB (Chroma + InMemory fallback) kurulumu, RAG arama uç noktası | src/backend/core/{embeddings,vector_store}.py, src/backend/services/comparison_service.py, src/backend/api/routes/{compare,search}.py, tests/test_backend/test_vector_store.py, tests/test_backend/conftest.py, DECISIONS.md | tamamlandı
+
 ## Değişen Dosyalar (son oturum)
 
 - README.md (yeni)

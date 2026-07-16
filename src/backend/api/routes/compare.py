@@ -23,7 +23,17 @@ def _comparison_service(db: Session = Depends(get_db)) -> ComparisonService:
 def compare_campaigns(
     term_months: int | None = Query(None, description="Vade filtresi (Ay)"),
     amount: float | None = Query(None, description="Yatırım tutarı filtresi (TL)"),
+    campaign_type: str | None = Query(None, description="Kampanya türü filtresi"),
     service: ComparisonService = Depends(_comparison_service),
 ):
     """Mevduat/katılma hesabı kampanyalarını kâr payı oranına göre karşılaştırır."""
-    return service.compare(term_months=term_months, amount=amount)
+    return service.compare(term_months=term_months, amount=amount, campaign_type=campaign_type)
+
+
+@router.get("/compare/best", response_model=CompareResponse | None)
+def best_rate(
+    campaign_type: str | None = Query(None, description="Kampanya türü filtresi"),
+    service: ComparisonService = Depends(_comparison_service),
+):
+    """En yüksek kâr payı oranına sahip kampanyayı döner."""
+    return service.best_rate(campaign_type=campaign_type)
