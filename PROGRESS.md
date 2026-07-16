@@ -15,6 +15,7 @@
 
 ## Bugün / Bu Oturumda Yapılanlar
 
+- 2026-07-16 | Kampanya kategorisi sınıflandırma için hibrit (ML + kural tabanlı) model | src/nlp/classifier.py, tests/test_nlp/test_classifier.py | tamamlandı
 - 2026-07-16 | Oran, tutar ve vade bilgileri için normalizasyon ve format standardizasyonu modülü | src/nlp/normalizer.py, tests/test_nlp/test_normalizer.py | tamamlandı
 - 2026-07-16 | Bilgi çıkarımı modülü (kâr payı oranı, vade, asgari/azami tutar, avantaj ve kitle tespiti) | src/nlp/extractor.py, tests/test_nlp/test_extractor.py | tamamlandı
 - 2026-07-16 | Metin ön işleme pipeline'ı (temizleme, tokenizasyon, normalizasyon ve Türkçe normalizasyonu) | src/nlp/preprocessor.py, tests/test_nlp/test_preprocessor.py, docks/nlp-approach.md | tamamlandı

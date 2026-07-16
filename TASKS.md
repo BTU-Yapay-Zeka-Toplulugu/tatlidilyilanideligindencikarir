@@ -13,7 +13,7 @@
 - [x] Metin ön işleme pipeline'ı (temizleme, tokenizasyon, normalizasyon)
 - [x] Bilgi çıkarımı: kâr payı oranı, vade, tutar, tarih, avantaj tespiti (kural tabanlı + NER)
 - [x] Format standardizasyonu (%2,05 / 2.05% / 500 TL / 500₺ gibi varyasyonların birleştirilmesi)
-- [ ] Kampanya türü sınıflandırma modeli
+- [x] Kampanya türü sınıflandırma modeli
 - [ ] Model performans değerlendirmesi (varsa test seti ile doğruluk ölçümü)
 
 ### Kişi 3 — Backend / Sistem Mühendisi
@@ -72,7 +72,7 @@
 | Kişi | Görev | Durum |
 | --- | --- | --- |
 | Kişi 1 | Veri kalite kontrolü, eksik/edge-case veri toplama | [x] |
-| Kişi 2 | Kampanya sınıflandırma modeli, çıkarım doğruluğunun test edilmesi | [ ] |
+| Kişi 2 | Kampanya sınıflandırma modeli, çıkarım doğruluğunun test edilmesi | [x] |
 | Kişi 3 | Karşılaştırma sorguları, vektör DB kurulumu (Chroma/FAISS) | [ ] |
 | Kişi 4 | Dashboard tam işlevsel hale getirme, chatbot arayüz tasarımı | [ ] |
 
