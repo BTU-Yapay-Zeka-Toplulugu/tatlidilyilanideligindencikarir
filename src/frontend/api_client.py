@@ -8,13 +8,14 @@ import requests
 class ApiClient:
     """FastAPI backend uç noktalarını saran basit istemci."""
 
-    def __init__(self, base_url: str = "http://localhost:8000") -> None:
-        """Backend taban URL'sini yapılandırır."""
+    def __init__(self, base_url: str = "http://localhost:8000", timeout: int = 120) -> None:
+        """Backend taban URL'sini ve istek zaman aşımını yapılandırır."""
         self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
 
     def _get(self, path: str, params: dict | None = None) -> Any:
         """GET isteği gönderir ve JSON yanıtı döner."""
-        response = requests.get(f"{self.base_url}{path}", params=params, timeout=10)
+        response = requests.get(f"{self.base_url}{path}", params=params, timeout=self.timeout)
         response.raise_for_status()
         return response.json()
 

@@ -2,18 +2,29 @@
 
 from fastapi import APIRouter, Depends, Query
 
-from src.backend.core.llm_factory import LLMClientFactory
+from src.backend.core.llm_factory import LLMClient, LLMClientFactory
 from src.backend.core.vector_store import VectorStore, get_vector_store
 from src.backend.services.chatbot_service import ChatbotService
 
 router = APIRouter(prefix="/api", tags=["chatbot"])
+
+# Model (2GB GGUF) yalnızca bir kez yüklenir; her istekte yeniden yüklenmez.
+_llm_cache: LLMClient | None = None
+
+
+def _get_llm() -> LLMClient:
+    """Chatbot için ana yanıtlayıcı modelini önbelleğe alır (tek yükleme)."""
+    global _llm_cache
+    if _llm_cache is None:
+        _llm_cache = LLMClientFactory.main_responser()
+    return _llm_cache
 
 
 def _chatbot_service(
     store: VectorStore = Depends(get_vector_store),
 ) -> ChatbotService:
     """ChatbotService örneğini vektör deposu ve LLM ile enjekte eder (DI)."""
-    return ChatbotService(vector_store=store, llm=LLMClientFactory.create())
+    return ChatbotService(vector_store=store, llm=_get_llm())
 
 
 @router.get("/chat")
