@@ -76,6 +76,26 @@ Format:
 - **Alternatifler:** React + Recharts/Plotly (daha üretim kaliteli ama ayrı build zinciri/JS ekibi gerektirir; elendi).
 - **Sonuçlar:** `src/frontend/` altına Streamlit uygulaması (`app.py`) yazılacak; `requirements.txt`'e `streamlit`, `plotly` eklenecek.
 
+## ADR-008: Backend'in Hazır Frontend'e Uyarlanması
+
+- **Tarih:** 17 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** Frontend (Kişi 4) bir **Vite + React + Tailwind** uygulamasıdır (Streamlit değil; ARCHITECTURE/PROGRESS.md eski bilgi içeriyor). Backend ise PostgreSQL + FastAPI `/api/*` uç noktaları sunmaktadır. Frontend'in beklediği endpoint isimleri, response alan adları ve WebSocket akışı mevcut backend ile **uyumsuzdur**. Frontend'e dokunmadan backend adapte edilecektir. Docker kapsam dışıdır (Bölüm 3 kısıtı).
+- **Karar:** Backend'e frontend'in beklediği sözleşmeye uyan yeni router'lar eklenir; var olan `/api/*` uç noktaları geriye dönük uyumluluk için korunur.
+  - **Dashboard (REST):**
+    - `GET /finansman/ozet` → `FinansmanKalemi[]` (`id`, `bankaAdi`, `urunAdi`, `tutar`, `karOrani`, `vade`, `tarih`)
+    - `GET /finansman/karsilastirma` (query: `bankaIds`, `urunTuru`) → `KarsilastirmaKalemi[]` (`bankaId`, `bankaAdi`, `urunler[]`)
+    - `GET /finansman/bankalar` → `BankaKalemi[]` (`id`, `ad`, `logo`)
+  - **Chatbot:**
+    - `POST /chat/mesaj` (`{mesaj, oturumId}`) → `{oturumId, mesaj:{id,rol,icerik,atiflar,zaman}}`
+    - `GET /chat/gecmis?oturumId` → `Mesaj[]`
+    - `POST /chat/temizle` (`{oturumId}`)
+    - **WebSocket** `/ws/chat` → RAG streaming (`{tur:'chunk'|'atiflar'|'bitti', icerik/atiflar}`)
+  - CORS `*` (zaten var). Chat geçmişi oturum başına bellek-içi saklanır (demo amaçlı).
+- **Gerekçe:** Frontend sabit ve ekip arkadaşı tarafından teslim edildi; adaptasyon backend (serializer/DTO) katmanında yapılarak risk minimize edildi.
+- **Alternatifler:** Frontend'i `/api/*` kullanacak şekilde değiştirmek — reddedildi (görev: frontend'e dokunma).
+- **Sonuçlar:** Yeni `frontend_bridge` router'ları + `ChatHistoryStore` + WebSocket endpoint'i eklendi; DB boş olduğu için test verisi (seeder) sağlandı.
+
 ## ADR-007: Demo Videosu ve Sunum (PDF/PPTX) Üretimi
 
 - **Tarih:** 16 Temmuz 2026

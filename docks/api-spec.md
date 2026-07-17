@@ -102,3 +102,47 @@ conda activate katilim-nlp
 uvicorn src.backend.main:app --reload
 # Swagger: http://localhost:8000/docs
 ```
+
+## Frontend Köprü Uç Noktaları (React/Vite ön yüz)
+
+Bu uç noktalar `src/backend/api/routes/frontend_bridge.py` içinde tanımlıdır ve
+ön yüzün beklediği Türkçe alan adlı response sözleşmesine uygundur. Eski
+`/api/*` uç noktaları geriye dönük uyumluluk için korunur.
+
+### `GET /finansman/ozet`
+Tüm kampanyaların finansman özet kalemlerini döner.
+- **Yanıt:** `200` → `FinansmanKalemi[]`
+  (`id`, `bankaAdi`, `urunAdi`, `tutar`, `karOrani`, `vade`, `tarih`)
+
+### `GET /finansman/karsilastirma`
+Bankalara göre gruplanmış karşılaştırma verisini döner.
+- **Sorgu:** `bankaIds` (string[], opsiyonel), `urunTuru` (str, opsiyonel)
+- **Yanıt:** `200` → `KarsilastirmaKalemi[]`
+  (`bankaId`, `bankaAdi`, `urunler: FinansmanKalemi[]`)
+
+### `GET /finansman/bankalar`
+Ön yüz filtre seçenekleri için banka listesini döner.
+- **Yanıt:** `200` → `BankaKalemi[]` (`id`, `ad`, `logo`)
+
+### `POST /chat/mesaj`
+Chatbot'a REST üzerinden mesaj gönderir.
+- **İstek:** `{ mesaj: str, oturumId?: str }`
+- **Yanıt:** `200` → `{ oturumId: str, mesaj: Mesaj }`
+  (`Mesaj`: `id`, `rol`, `icerik`, `atiflar: Atif[]`, `zaman`, `akisDevam`)
+  (`Atif`: `bankaAdi`, `urunAdi`, `url?`)
+
+### `GET /chat/gecmis`
+Bir oturuma ait mesaj geçmişini döner.
+- **Sorgu:** `oturumId` (str, opsiyonel)
+- **Yanıt:** `200` → `Mesaj[]`
+
+### `POST /chat/temizle`
+Oturum geçmişini temizler.
+- **İstek:** `{ oturumId: str }`
+- **Yanıt:** `200` → `{ status, oturumId }`
+
+### `WS /ws/chat`
+RAG chatbot streaming WebSocket'u. İstemci `{ mesaj, oturumId }` gönderir;
+sunucu sırasıyla `{tur:'chunk', icerik}`, `{tur:'atiflar', atiflar}`,
+`{tur:'bitti'}` paketleri gönderir.
+

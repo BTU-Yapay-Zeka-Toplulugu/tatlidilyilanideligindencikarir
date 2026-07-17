@@ -28,9 +28,9 @@ Detaylar için `ARCHITECTURE.md` dosyasına bakın.
 | Bilgi Çıkarımı | spaCy (Türkçe model) + regex kuralları + açık kaynak LLM (Ollama) |
 | Sınıflandırma | scikit-learn (TF-IDF+SVM) veya BERTurk fine-tune |
 | Backend API | FastAPI (Python) |
-| Dashboard | React + Recharts/Plotly ya da Streamlit |
-| Chatbot | RAG: LangChain/LlamaIndex + yerel LLM + Chroma/FAISS |
-| Dağıtım | Docker Compose (tamamen on-premise, internet bağımlılığı yok) |
+| Dashboard | React + Vite + Tailwind + Recharts |
+| Chatbot | RAG: yerel LLM (llama.cpp) + Chroma/InMemory vektör DB + WebSocket streaming |
+| Dağıtım | Docker Compose (opsiyonel) veya lokal (uvicorn + npm run dev), tamamen on-premise |
 
 ## ⚠️ Kritik Kısıtlar
 
@@ -44,45 +44,52 @@ Detaylar için `ARCHITECTURE.md` dosyasına bakın.
 
 > **Not:** Bu proje sıfırdan bir Python/conda ortamı oluşturmaz. Hazırda var olan `katilim-nlp` conda ortamı İSTİSNASIZ olarak kullanılmalıdır.
 
+**Backend (Python/FastAPI):**
 ```bash
 git clone <repo-url>
 cd katilim-bankaciligi-nlp
 conda activate katilim-nlp
 cp .env.example .env
-docker compose up --build
+# Veritabanını tohumla (bankalar + kampanyalar)
+python -m src.database.seed
 ```
 
-Modeller %100 çevrimdışı çalışır: kullanılacak yerel model(ler) `model/` dizinine (`.gguf` olarak) konulur ve `.env` içindeki `LOCAL_MODEL_PATH` değişkeni bu yolu gösterir. Dizin ise içindeki ilk `.gguf` otomatik yüklenir — daha iyi bir model için sadece yeni `.gguf` dosyasını `model/` altına bırakın. LLM, **llama.cpp** (`llama-cpp-python`) ile doğrudan çalıştırılır; Ollama gerektirmez. Mevcut test modeli: `qwen2.5-3b-instruct-q4_k_m.gguf`. Hiçbir kütüphane/ajan internetten model indirmeye teşebbüs etmemelidir.
-
-## Çalıştırma
-
-### Tüm Sistem (Docker Compose)
-
+**Frontend (React/Vite):** `src/frontend/.env` içinde backend adresi tanımlıdır
+(`VITE_API_BASE_URL`, `VITE_CHATBOT_WS_URL`). Gerekirse düzenleyin.
 ```bash
-conda activate katilim-nlp
-cp .env.example .env
-docker compose up --build
+cd src/frontend
+npm install
 ```
 
-Bu komut PostgreSQL, Ollama (yerel LLM) ve FastAPI backend servislerini ayağa kaldırır. Backend Swagger arayüzü: `http://localhost:8000/docs`.
+Modeller %100 çevrimdışı çalışır: kullanılacak yerel model(ler) `model/` dizinine (`.gguf` olarak) konulur ve `.env` içindeki `LOCAL_MODEL_PATH` değişkeni bu yolu gösterir. Dizin içindeki ilk `.gguf` otomatik yüklenir. LLM, **llama.cpp** (`llama-cpp-python`) ile doğrudan çalıştırılır; Ollama gerektirmez. Mevcut test modeli: `qwen2.5-3b-instruct-q4_k_m.gguf`. Hiçbir kütüphane/ajan internetten model indirmeye teşebbüs etmemelidir.
 
-### Sadece Backend (yerel)
+> **Docker:** Bu proje Docker Compose ile de dağıtılabilir (`docker-compose.yml` mevcuttur), ancak bu kılavuz lokal (Docker'sız) çalıştırmayı anlatır.
 
+## Çalıştırma (Lokal, Docker'sız)
+
+### 1) PostgreSQL'in çalışır durumda olması
+Backend `.env` içindeki `DATABASE_URL` ile PostgreSQL'e bağlanır (varsayılan `localhost:5433`).
+
+### 2) Backend (terminal 1)
 ```bash
 conda activate katilim-nlp
 uvicorn src.backend.main:app --reload
+# Swagger: http://localhost:8000/docs
 ```
 
-### Dashboard + Chatbot (Streamlit ön yüz)
-
+### 3) Frontend (terminal 2)
 ```bash
-conda activate katilim-nlp
-streamlit run src/frontend/app.py
+cd src/frontend
+npm run dev
+# Varsayılan: http://localhost:5173
 ```
+
+Backend ve frontend aynı makinede çalıştığında frontend `src/frontend/.env` içindeki
+`VITE_API_BASE_URL=http://localhost:8000` üzerinden backend'e bağlanır (CORS `*`).
 
 ### Testler
-
 ```bash
+conda activate katilim-nlp
 pytest tests/
 ```
 
@@ -136,11 +143,21 @@ katilim-bankaciligi-nlp/
 
 ### Backend API
 
-FastAPI ile katmanlı mimari (Repository / Service / Factory / DI). Tüm uç
-noktalar `docks/api-spec.md` içinde belgelenmiştir; canlı Swagger arayüzü
-`uvicorn src.backend.main:app --reload` sonrası `http://localhost:8000/docs`
-adresindedir. RAG chatbot (`/api/chat`) vektör arama + yerel LLM (Ollama)
-kullanır; tamamen çevrimdışı çalışır.
+FastAPI ile katmanlı mimari (Repository / Service / Factory / DI). Canlı Swagger
+arayüzü `uvicorn src.backend.main:app --reload` sonrası `http://localhost:8000/docs`
+adresindedir.
+
+Frontend'in kullandığı uç noktalar (Türkçe alan adlı response'lar):
+- `GET /finansman/ozet` → finansman özet kalemleri
+- `GET /finansman/karsilastirma` (`bankaIds`, `urunTuru`) → bankaya göre gruplu karşılaştırma
+- `GET /finansman/bankalar` → banka listesi (filtre seçenekleri)
+- `POST /chat/mesaj` (`{mesaj, oturumId}`) → chatbot yanıtı
+- `GET /chat/gecmis?oturumId` → sohbet geçmişi
+- `POST /chat/temizle` (`{oturumId}`) → oturum temizleme
+- `WS /ws/chat` → RAG streaming (chunk/atiflar/bitti paketleri)
+
+Eski `/api/*` uç noktaları geriye dönük uyumluluk için korunur. RAG chatbot
+vektör arama + yerel LLM (llama.cpp) kullanır; tamamen çevrimdışı çalışır.
 
 ## Ekip
 

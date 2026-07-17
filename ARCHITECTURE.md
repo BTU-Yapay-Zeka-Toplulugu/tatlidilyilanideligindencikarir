@@ -25,7 +25,7 @@ Chatbot (RAG tabanlı) → Kullanıcı Arayüzü
 | Bilgi Çıkarımı | spaCy (Türkçe model) + regex + yerel LLM (Ollama) | Kural tabanlı hız + LLM esnekliği hibrit yaklaşım |
 | Sınıflandırma | scikit-learn (TF-IDF+SVM) veya BERTurk fine-tune | Basit başlangıç (SVM), gerekirse BERTurk'e geçiş |
 | Backend API | FastAPI (Python) | Hızlı, async destekli, otomatik Swagger/OpenAPI |
-| Dashboard | React + Recharts/Plotly ya da Streamlit | Streamlit hızlı prototip, React üretim kalitesi için |
+| Dashboard | React + Vite + Tailwind + Recharts | Streamlit hızlı prototip, React üretim kalitesi için |
 | Chatbot | RAG: LangChain/LlamaIndex + yerel LLM + Chroma/FAISS | Açık kaynak, on-premise çalışabilir RAG stack |
 | Dağıtım | Docker Compose | Tek komutla tüm sistemin ayağa kalkması, on-premise uyum |
 

@@ -5,8 +5,8 @@
 ## Son Güncelleme
 
 - **Tarih:** 17 Temmuz 2026
-- **Güncelleyen:** Otonom agent (devralma oturumu)
-- **Genel Durum:** Tüm kaynak kod, NLP, backend, frontend, Docker ve dokümantasyon tamamlandı. 110 test geçiyor. Bekleyen kalemler yalnızca insan işi olan demo videosu ve sunum dosyaları (ADR-007).
+- **Güncelleyen:** Otonom agent (frontend↔backend uyum oturumu)
+- **Genel Durum:** Backend, hazır React/Vite frontend'in beklediği sözleşmeye uyarlandı (yeni `/finansman/*` REST + `/chat/*` REST + `/ws/chat` WebSocket köprü uç noktaları). DB boş olduğu için seeder eklendi. Docker kapsam dışı bırakıldı. Bekleyen kalemler yalnızca insan işi olan demo videosu ve sunum dosyaları (ADR-007).
 
 ## Şu An Neredeyiz
 
@@ -20,6 +20,10 @@
 
 ## Bugün / Bu Oturumda Yapılanlar
 
+- 2026-07-17 | Frontend (React/Vite) ↔ Backend uyum çalışması: mevcut `/api/*` korunarak frontend sözleşmesine uyan köprü router'ı eklendi (`src/backend/api/routes/frontend_bridge.py`): `GET /finansman/ozet`, `GET /finansman/karsilastirma` (bankaIds/urunTuru), `GET /finansman/bankalar`, `POST /chat/mesaj`, `GET /chat/gecmis`, `POST /chat/temizle`, `WS /ws/chat` (RAG streaming). Turkish field mapping + ChatYaniti/Mesaj/Atif şemaları `schemas.py`'e eklendi. | frontend_bridge.py, schemas.py, main.py | tamamlandı
+- 2026-07-17 | Chatbot servisi lifespan'da tek sefer yükleniyor (2GB GGUF), vektör indeksi başlangıçta kuruluyor; REST/WS uç noktaları `app.state.chatbot`'a bağlandı (tembel fallback ile). | main.py, frontend_bridge.py | tamamlandı
+- 2026-07-17 | DB boş olduğu için `src/database/seed.py` seeder'ı eklendi ve 9 banka + 121 kampanya yüklendi. Frontend `.env` (VITE_API_BASE_URL / VITE_CHATBOT_WS_URL) eklendi. | seed.py, src/frontend/.env | tamamlandı
+- 2026-07-17 | Uyum için 4 yeni backend testi (`tests/test_backend/test_frontend_bridge.py`) eklendi; tüm backend testleri geçiyor (24 passed). | tamamlandı
 - 2026-07-17 | Bekleyen 2 düzeltme commit'lendi: chat uç noktasının her istekte 2GB GGUF modelini yeniden yüklemesini engelleyen önbellek + Streamlit API istemci zaman aşımı (120sn) | src/backend/api/routes/chat.py, src/frontend/api_client.py | tamamlandı
 - 2026-07-17 | PROGRESS.md gerçek duruma güncellendi (eski "kod yazılmadı" ifadesi düzeltildi), TASKS.md rol-checkbox'ları Haftalık tablolarla uyumlu hale getirildi | PROGRESS.md, TASKS.md | tamamlandı
 

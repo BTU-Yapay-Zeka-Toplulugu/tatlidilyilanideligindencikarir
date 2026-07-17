@@ -91,6 +91,60 @@ class CampaignDetailResponse(CampaignResponse):
     extracted_detail: ExtractedDetailResponse | None = None
 
 
+class FinansmanKalemi(BaseModel):
+    """Frontend'in beklediği finansman özet kalemi (Türkçe alan adları)."""
+
+    id: str
+    bankaAdi: str
+    urunAdi: str
+    tutar: float
+    karOrani: float
+    vade: str
+    tarih: str
+
+
+class KarsilastirmaKalemi(BaseModel):
+    """Frontend'in beklediği karşılaştırma satırı (banka başına ürünler)."""
+
+    bankaId: str
+    bankaAdi: str
+    urunler: list[FinansmanKalemi]
+
+
+class BankaKalemi(BaseModel):
+    """Frontend'in beklediği banka listesi kalemi."""
+
+    id: str
+    ad: str
+    logo: str | None = None
+
+
+class Atif(BaseModel):
+    """RAG kaynakçası (chatbot citation)."""
+
+    bankaAdi: str
+    urunAdi: str
+    url: str | None = None
+
+
+class Mesaj(BaseModel):
+    """Chatbot mesajı (frontend sözleşmesi)."""
+
+    id: str
+    rol: str
+    icerik: str
+    atiflar: list[Atif] = []
+    zaman: str
+    akisDevam: bool = False
+
+
+class ChatYaniti(BaseModel):
+    """POST /chat/mesaj yanıtı."""
+
+    oturumId: str
+    mesaj: Mesaj
+
+
 class CompareResponse(BaseModel):
     """Karşılaştırma API yanıtı için Pydantic şeması."""
 

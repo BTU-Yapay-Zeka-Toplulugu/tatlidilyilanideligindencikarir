@@ -1,0 +1,101 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "assistant": "AI Assistant",
+    "brand": "Tatlıdil Platform",
+    "tagline": "Participation Banking",
+    "version": "NLP Platform · v1.0.0 · On-Premise",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "pastChats": "Past Chats",
+    "newChat": "New Chat"
+  },
+  "theme": {
+    "toggleLight": "Switch to light mode",
+    "toggleDark": "Switch to dark mode"
+  },
+  "dashboard": {
+    "title": "Financing Dashboard",
+    "subtitle": "data as of",
+    "cards": {
+      "totalFinancing": "Total Financing",
+      "avgRate": "Average Profit Rate",
+      "bankCount": "Bank Count",
+      "bestRate": "Best Rate",
+      "trend": {
+        "allProducts": "All active products included",
+        "weightedAvg": "Weighted average",
+        "registered": "Registered banks",
+        "lowest": "Lowest profit rate"
+      }
+    },
+    "chart": {
+      "title": "Average Financing by Bank",
+      "subtitle": "Average amount (₺) and profit rate (%) comparison",
+      "avgAmount": "Avg. Amount",
+      "avgRate": "Avg. Profit Rate"
+    },
+    "table": {
+      "title": "Financing Comparison Table",
+      "listing": "products listed",
+      "export": "Export",
+      "sortLabel": "sort by column",
+      "months": "mo",
+      "cols": {
+        "bank": "Bank",
+        "product": "Product",
+        "amount": "Amount",
+        "rate": "Profit Rate",
+        "term": "Term",
+        "date": "Date"
+      }
+    },
+    "empty": {
+      "noData": "No financing data yet",
+      "noDataDesc": "No financing records have been created system-wide.",
+      "noComparison": "No data to compare",
+      "noComparisonDesc": "No financing data available for comparison.",
+      "refresh": "Refresh"
+    }
+  },
+  "chatbot": {
+    "title": "AI Financing Assistant",
+    "subtitle": "RAG-powered · Participation Banking",
+    "welcome": "Welcome to the Participation Banking Assistant",
+    "welcomeDesc": "I'm ready to answer your questions about financing products, profit rates, and participation banking. Select a question below or type your own.",
+    "suggestionsLabel": "Suggested questions",
+    "placeholder": "Ask a question about participation banking...",
+    "sendLabel": "Send message",
+    "stopLabel": "Stop response",
+    "shortcut": "Enter to send · Shift + Enter for new line",
+    "you": "You",
+    "assistant": "AI Assistant",
+    "thinking": "Assistant is preparing a response",
+    "sources": "Sources",
+    "copyCode": "Copy code",
+    "copied": "Copied",
+    "newMessage": "New message",
+    "responding": "Responding...",
+    "questions": [
+      "What is the lowest profit rate for vehicle financing?",
+      "Which banks stand out in home financing?",
+      "What is the difference between a participation account and a time deposit?",
+      "What participation bank options exist in the individual pension system?",
+      "What is required to open a gold account?"
+    ]
+  },
+  "common": {
+    "retry": "Try Again",
+    "error": {
+      "title": "Something went wrong",
+      "desc": "An error occurred while loading the data. Please try again.",
+      "retryBtn": "Try Again"
+    },
+    "notFound": {
+      "code": "404",
+      "title": "Page Not Found",
+      "desc": "The page you're looking for doesn't exist or has been moved.",
+      "back": "Back to Dashboard"
+    }
+  }
+}

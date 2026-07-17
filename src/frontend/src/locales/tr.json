@@ -1,0 +1,101 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "assistant": "AI Asistan",
+    "brand": "Tatlıdil Platform",
+    "tagline": "Katılım Bankacılığı",
+    "version": "NLP Platform · v1.0.0 · On-Premise",
+    "openMenu": "Menüyü aç",
+    "closeMenu": "Menüyü kapat",
+    "pastChats": "Geçmiş Sohbetler",
+    "newChat": "Yeni Sohbet"
+  },
+  "theme": {
+    "toggleLight": "Açık temaya geç",
+    "toggleDark": "Koyu temaya geç"
+  },
+  "dashboard": {
+    "title": "Finansman Dashboard",
+    "subtitle": "itibarıyla veriler",
+    "cards": {
+      "totalFinancing": "Toplam Finansman",
+      "avgRate": "Ortalama Kâr Oranı",
+      "bankCount": "Banka Sayısı",
+      "bestRate": "En Uygun Oran",
+      "trend": {
+        "allProducts": "Tüm aktif ürünler dahil",
+        "weightedAvg": "Ağırlıklı ortalama",
+        "registered": "Sisteme kayıtlı bankalar",
+        "lowest": "En düşük kâr oranı"
+      }
+    },
+    "chart": {
+      "title": "Bankaya Göre Ortalama Finansman",
+      "subtitle": "Ortalama tutar (₺) ve kâr oranı (%) karşılaştırması",
+      "avgAmount": "Ort. Tutar",
+      "avgRate": "Ort. Kâr Oranı"
+    },
+    "table": {
+      "title": "Finansman Karşılaştırma Tablosu",
+      "listing": "ürün listeleniyor",
+      "export": "Dışa Aktar",
+      "sortLabel": "sütununa göre sırala",
+      "months": "ay",
+      "cols": {
+        "bank": "Banka",
+        "product": "Ürün",
+        "amount": "Tutar",
+        "rate": "Kâr Oranı",
+        "term": "Vade",
+        "date": "Tarih"
+      }
+    },
+    "empty": {
+      "noData": "Henüz finansman verisi bulunmuyor",
+      "noDataDesc": "Sistem genelinde görüntülenecek finansman kaydı oluşturulmamış.",
+      "noComparison": "Karşılaştırılacak veri bulunmuyor",
+      "noComparisonDesc": "Henüz karşılaştırılacak finansman verisi bulunmamaktadır.",
+      "refresh": "Yenile"
+    }
+  },
+  "chatbot": {
+    "title": "AI Finansman Asistanı",
+    "subtitle": "RAG destekli · Katılım Bankacılığı",
+    "welcome": "Katılım Bankacılığı Asistanına Hoş Geldiniz",
+    "welcomeDesc": "Finansman ürünleri, kâr oranları ve katılım bankacılığı hakkında sorularınızı yanıtlamak için hazırım. Aşağıdan bir soru seçin veya kendiniz yazın.",
+    "suggestionsLabel": "Önerilen sorular",
+    "placeholder": "Katılım bankacılığı hakkında bir soru sorun...",
+    "sendLabel": "Mesaj gönder",
+    "stopLabel": "Yanıtı durdur",
+    "shortcut": "Enter ile gönder · Shift + Enter ile satır atla",
+    "you": "Siz",
+    "assistant": "AI Asistan",
+    "thinking": "Asistan yanıt hazırlıyor",
+    "sources": "Kaynakçalar",
+    "copyCode": "Kodu kopyala",
+    "copied": "Kopyalandı",
+    "newMessage": "Yeni mesaj",
+    "responding": "Yanıt oluşturuluyor...",
+    "questions": [
+      "Araç finansmanı için en düşük kâr oranı nedir?",
+      "Konut finansmanında hangi bankalar öne çıkıyor?",
+      "Katılım hesabı ile vadeli hesap arasındaki fark nedir?",
+      "Bireysel emeklilik sisteminde katılım bankası seçenekleri neler?",
+      "Altın hesabı açmak için ne gerekli?"
+    ]
+  },
+  "common": {
+    "retry": "Tekrar Dene",
+    "error": {
+      "title": "Bir sorun oluştu",
+      "desc": "Veriler yüklenirken bir sorun oluştu. Lütfen tekrar deneyin.",
+      "retryBtn": "Tekrar Dene"
+    },
+    "notFound": {
+      "code": "404",
+      "title": "Sayfa Bulunamadı",
+      "desc": "Aradığınız sayfa mevcut değil veya taşınmış olabilir.",
+      "back": "Dashboard'a Dön"
+    }
+  }
+}
