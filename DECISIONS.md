@@ -96,6 +96,41 @@ Format:
 - **Alternatifler:** Frontend'i `/api/*` kullanacak şekilde değiştirmek — reddedildi (görev: frontend'e dokunma).
 - **Sonuçlar:** Yeni `frontend_bridge` router'ları + `ChatHistoryStore` + WebSocket endpoint'i eklendi; DB boş olduğu için test verisi (seeder) sağlandı.
 
+## ADR-009: Sistem Geneli Debug ve Stabilizasyon (WebSocket + Dashboard + Veri Kalitesi)
+
+- **Tarih:** 17 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** Sistem "çalışıyor gibi" görünüyordu ama üç alanda güvenilir değildi: (A) chatbot/WebSocket, (B) frontend dashboard, (C) CSV/JSON kampanya verisinin çıkarım kalitesi. Kanıta dayalı (log/test/örnek veri) teşhis yapıldı.
+
+### A) WebSocket / Chatbot — Teşhis Mini-Spec
+- **Belirti:** Mesaj yazınca cevap "geliyor gibi" ama atıflar (kaynakça) hep "Bilinmeyen" görünüyor; uzun cevaplarda bağlantı düşüyor.
+- **Beklenen:** Gerçek cevap + doğru banka/ürün/URL atıfları; bağlantı stabil.
+- **Kök sebep 1 (atıflar):** `ChatbotService.answer()` `sources` içine `metadata` koymuyordu; `frontend_bridge._atiflari_olustur()` ise `s["metadata"]` okuyordu → tüm atıflar boş.
+- **Kök sebep 2 (sessiz hata):** WS `except Exception: return` tüm hataları yutuyor, frontend askıda kalıyordu; ayrıca her WS bağlantısı yeni `ChatbotService`/LLM kuruyordu (lifespan'daki 2GB model yeniden yükleniyor).
+- **Kök sebep 3 (bağlantı düşmesi):** Bloke edici (senkron) LLM çıkarımı async WS handler içinde olay döngüsünü kilitliyor; uzun yanıtta WebSocket keepalive ping'i cevaplanamayınca "keepalive ping timeout" ile kopuyordu.
+- **Çözüm:** `answer()` `sources`'a tam `metadata`+`text` ekler; WS `app.state.chatbot`'u yeniden kullanır, hataları loglar ve `bitti` göndererek UI'ı askıda bırakmaz; LLM çağrısı `run_in_threadpool` ile çalıştırılır (olay döngüsü ve ping'ler serbest kalır); `WebSocketDisconnect` ayrıca ele alınır.
+- **Doğrulama:** wscat benzeri Python istemcisiyle uçtan uca test — gerçek cevap + gerçek banka/ürün/URL atıfları döndü; uzun (>keepalive) yanıt kopmadan tamamlandı; aynı bağlantıda çoklu mesaj çalıştı. REST `/chat/mesaj` de doğru atıf döndürdü.
+
+### B) Frontend Dashboard — Teşhis Mini-Spec
+- **Belirti:** Karşılaştırma tablosu tutar/oran hücreleri boş (—); grafik barları düz/0.
+- **Beklenen:** Tablo/grafik gerçek tutar ve kâr oranlarıyla dolu.
+- **Kök sebep:** Backend `/finansman/karsilastirma` iç içe (nested) `{bankaId,bankaAdi,urunler[]}` dönüyordu; ancak frontend bileşenleri (KarsilastirmaTablosu, FinansmanGrafigi, csvExporter, sıralama hook'u) veriyi **düz `FinansmanKalemi[]`** olarak, her satırda doğrudan `tutar/karOrani/urunAdi/vade/tarih` okuyor. ADR-008'de sözleşme doğrulanmadan varsayılmıştı.
+- **Çözüm:** Endpoint düz `FinansmanKalemi[]` dönecek şekilde düzeltildi (`bankaIds`/`urunTuru` filtreleri korundu). Frontend'e dokunulmadı (görev kısıtı). İlgili backend testi güncellendi.
+- **Doğrulama:** Canlı backend'e karşı bileşen hesaplama mantığı (reduce/format) simüle edildi: 121 satırda 0 undefined alan, 9/9 grafik barı > 0, özet kartlar gerçek toplam üretiyor. `npm run build` temiz derlendi.
+
+### C) Veri Kalitesi / Extraction — Teşhis Mini-Spec
+- **Belirti:** Kâr payı oranları %70–%100 gibi imkânsız değerler; sınıflandırma bazı sayfalarda yanlış.
+- **Beklenen:** Sadece gerçek kâr payı oranları (makul band), doğru kategori.
+- **Kök sebep (oran):** `extract_profit_share_rate` metindeki İLK `%N`'i, neye ait olduğuna bakmadan alıyordu → "%75 nakit iade", "%70 iştirak", "%80 ekspertiz (LTV)", "asgari ödeme %100", "%X devlet katkısı", "%20 KDV", "stopaj %10" gibi ifadeler kâr payı oranı sanılıyordu. Sorun **scraping'de değil, çıkarım (extraction) adımında** (ham metin doğru, atıf yanlış).
+- **Kök sebep (Türkçe casefold):** Anahtar kelime eşleşmeleri `str.lower()` kullanıyordu; Python'da `"İ".lower()` → `"i̇"` (birleşik nokta) olduğundan `"İndirim"`, `"FİNANSMAN"` gibi büyük-İ'li kelimeler eşleşmiyordu (sessiz hata). Bu hem eleme kelimelerini hem sınıflandırmayı bozuyordu (`classify_campaign_type("İHTİYAÇ FİNANSMANI")` → "Diğer").
+- **Çözüm:** Bağlam-duyarlı oran çıkarımı: yalnızca kâr payı/getiri/oran bağlamına **bitişik** ve makul (`0 < r <= %50`) yüzdeler kabul edilir; iade/indirim/iştirak/LTV/asgari ödeme/devlet katkısı/stopaj/KDV/puan/mil gibi ilgisiz bağlamlar geniş pencerede elenir; binlik ayraçlı sayı (`10.000`) oran sayılmaz. Türkçe-duyarlı `_tr_fold` (casefold + İ/I eşlemesi) tüm anahtar kelime eşleşmelerinde kullanılır (oran, hedef kitle, avantaj, sınıflandırma).
+- **Yeniden üretim:** `src/database/reprocess.py` eklendi; 121 kampanya için çıkarım yeniden çalıştırılıp DB güncellendi.
+- **Doğrulama (önce/sonra):** Oranlar — ÖNCE: 36 kayıt, maks %100, 10 adet > %50; SONRA: 3 kayıt, maks %36, 0 adet > %50 (sadece gerçek "Kâr/Getiri/Taksit Oranı" bağlamları). Sınıflandırma büyük-İ regresyonu düzeldi. Birim testler eklendi (format varyasyonları + yanlış-atıf elemesi + gerçek veri precision regresyonu).
+
+### Ek Temizlik
+- `tests/test_frontend/*` (eski Streamlit `api_client`/`ui_helpers` modüllerini import eden 4 ölü test) kaldırıldı; frontend artık React (ADR-008) olduğundan bu modüller yok ve testler `pytest tests/`'i toplama (collection) aşamasında kırıyordu.
+- **Sonuç:** `pytest tests/` → 113 passed.
+
 ## ADR-007: Demo Videosu ve Sunum (PDF/PPTX) Üretimi
 
 - **Tarih:** 16 Temmuz 2026

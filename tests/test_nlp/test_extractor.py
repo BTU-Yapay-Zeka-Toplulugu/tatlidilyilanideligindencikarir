@@ -19,6 +19,34 @@ def test_extract_profit_share_rate():
     assert extract_profit_share_rate("Hiçbir oran belirtilmemiş metin.") is None
 
 
+def test_extract_profit_share_rate_format_varyasyonlari():
+    """Farklı format varyasyonları (virgül/nokta, %/yüzde) doğru parse edilir."""
+    assert extract_profit_share_rate("Kâr payı oranı %2,05") == 2.05
+    assert extract_profit_share_rate("Getiri oranı yüzde 3") == 3.0
+    assert extract_profit_share_rate("kâr oranı 4,5%") == 4.5
+
+
+def test_extract_profit_share_rate_yanlis_atiflari_eler():
+    """İlgisiz yüzdeler (iade, indirim, iştirak, LTV, devlet katkısı, vergi)
+    yanlışlıkla kâr payı oranı olarak çıkarılmamalıdır (precision)."""
+    # Nakit iade / cashback — kâr payı oranı değil
+    assert extract_profit_share_rate("Biz Kart ile Dijital Üyeliklerde %75 Nakit İade Fırsatı!") is None
+    # İndirim (büyük İ ile — Türkçe casefold hatası regresyon testi)
+    assert extract_profit_share_rate("TROY Yıllık Paketinde %50 İndirim!") is None
+    # Sermaye iştiraki
+    assert extract_profit_share_rate("Sermayesine %70 oranında iştirak edilen bağlı ortaklık") is None
+    # LTV / ekspertiz değeri
+    assert extract_profit_share_rate("konutun ekspertiz değerinin %80'ine kadar finansman") is None
+    # Devlet katkısı / desteği
+    assert extract_profit_share_rate("Çeyiz Hesabı ile %25 devlet katkısından yararlanın") is None
+    # Asgari ödeme
+    assert extract_profit_share_rate("Asgari ödeme tutarı %100 olarak yansıtılır.") is None
+    # Makul olmayan yüksek oran (>%50) elenir
+    assert extract_profit_share_rate("oran %95 kâr payı") is None
+    # Binlik ayraçlı sayı bir oran değildir (% 10.000 -> tutar)
+    assert extract_profit_share_rate("Getiri Oranı % 10.000-20.000 arası bakiye") is None
+
+
 def test_extract_term_months():
     """Metin içindeki vade sürelerini ay bazında başarıyla çıkarır."""
     assert extract_term_months("12 ay vade ile ödeme kolaylığı.") == 12

@@ -5,8 +5,20 @@
 ## Son Güncelleme
 
 - **Tarih:** 17 Temmuz 2026
-- **Güncelleyen:** Otonom agent (frontend↔backend uyum oturumu)
-- **Genel Durum:** Backend, hazır React/Vite frontend'in beklediği sözleşmeye uyarlandı (yeni `/finansman/*` REST + `/chat/*` REST + `/ws/chat` WebSocket köprü uç noktaları). DB boş olduğu için seeder eklendi. Docker kapsam dışı bırakıldı. Bekleyen kalemler yalnızca insan işi olan demo videosu ve sunum dosyaları (ADR-007).
+- **Güncelleyen:** Otonom agent (sistem geneli debug & stabilizasyon oturumu)
+- **Genel Durum:** Üç şüpheli alan (A: WebSocket/chatbot, B: dashboard, C: veri kalitesi/extraction) kanıta dayalı olarak teşhis edilip düzeltildi ve uçtan uca test edildi (bkz. ADR-009). Chatbot atıfları artık gerçek banka/ürün/URL veriyor, uzun yanıtlarda bağlantı kopmuyor; dashboard karşılaştırma tablosu/grafiği gerçek tutar/oran ile doluyor; kâr payı oranı çıkarımı bağlam-duyarlı hâle getirildi (imkânsız %70–%100 değerleri elendi), Türkçe büyük-İ casefold hatası giderildi ve DB yeniden işlendi. `pytest tests/` → 113 passed. Bekleyen kalemler yalnızca insan işi olan demo videosu ve sunum dosyaları (ADR-007).
+
+## Bu Oturumda Yapılan Debug/Düzeltmeler (2026-07-17)
+
+| Tarih | Sorun | Kök sebep | Çözüm | Test sonucu |
+| --- | --- | --- | --- | --- |
+| 2026-07-17 | Chatbot atıfları hep "Bilinmeyen" | `answer()` sources'a metadata koymuyor, bridge metadata okuyor | sources'a tam metadata+text eklendi | WS+REST testinde gerçek banka/ürün/URL |
+| 2026-07-17 | WS sessiz hata + her bağlantıda 2GB model | `except: return` yutuyor; yeni ChatbotService/LLM | app.state.chatbot yeniden kullanımı, loglama, hata'da `bitti` | çoklu mesaj + log OK |
+| 2026-07-17 | Uzun yanıtta WS "keepalive ping timeout" | senkron LLM çağrısı olay döngüsünü kilitliyor | LLM `run_in_threadpool` ile çalıştırılıyor | uzun yanıt kopmadan tamamlandı |
+| 2026-07-17 | Dashboard tablo/grafik boş (tutar/oran) | `/finansman/karsilastirma` nested dönüyor, frontend düz bekliyor | endpoint düz `FinansmanKalemi[]` döner | 121 satır 0 undefined, 9/9 bar>0 |
+| 2026-07-17 | Kâr payı oranı %70–%100 imkânsız değerler | ilk `%N` bağlamsız alınıyor (iade/iştirak/LTV/KDV) | bağlam-duyarlı + makul-band + binlik-guard | önce 10 adet>%50 → sonra 0 |
+| 2026-07-17 | Büyük-İ kelimeler eşleşmiyor (sınıflandırma/eleme) | `str.lower()` "İ"→"i̇" (birleşik nokta) | Türkçe-duyarlı `_tr_fold` casefold | `İHTİYAÇ FİNANSMANI`→doğru kategori |
+| 2026-07-17 | `pytest tests/` collection kırılıyor | eski Streamlit test'leri kaldırılan modülleri import ediyor | ölü `tests/test_frontend/*` kaldırıldı | 113 passed |
 
 ## Şu An Neredeyiz
 

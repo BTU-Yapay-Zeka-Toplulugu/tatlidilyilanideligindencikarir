@@ -62,15 +62,35 @@ def test_finansman_ozet(client, test_db):
     assert item["bankaAdi"] == "Test Bankası"
 
 
-def test_finansman_karsilastirma_gruplama(client, test_db):
-    """Karşılaştırma uç noktası bankaya göre gruplar."""
+def test_finansman_karsilastirma_duz_liste(client, test_db):
+    """Karşılaştırma uç noktası frontend'in tükettiği düz FinansmanKalemi listesi döner.
+
+    Frontend bileşenleri (KarsilastirmaTablosu/FinansmanGrafigi/csvExporter)
+    her satırda doğrudan tutar/karOrani/urunAdi alanlarını okur; bu nedenle
+    yanıt iç içe (nested) değil, düz olmalıdır.
+    """
     _seed(client, test_db)
     res = client.get("/finansman/karsilastirma")
     assert res.status_code == 200
     body = res.json()
-    assert body[0]["bankaId"] == "1"
-    assert body[0]["bankaAdi"] == "Test Bankası"
-    assert body[0]["urunler"][0]["urunAdi"] == "Test Ürünü"
+    item = body[0]
+    # Düz FinansmanKalemi alanları satır köküne gelmeli (nested "urunler" DEĞİL)
+    for field in ("id", "bankaAdi", "urunAdi", "tutar", "karOrani", "vade", "tarih"):
+        assert field in item
+    assert "urunler" not in item
+    assert item["bankaAdi"] == "Test Bankası"
+    assert item["urunAdi"] == "Test Ürünü"
+
+
+def test_finansman_karsilastirma_banka_filtresi(client, test_db):
+    """bankaIds filtresi düz listede doğru çalışır."""
+    _seed(client, test_db)
+    res = client.get("/finansman/karsilastirma", params={"bankaIds": "999"})
+    assert res.status_code == 200
+    assert res.json() == []
+    res = client.get("/finansman/karsilastirma", params={"bankaIds": "1"})
+    assert res.status_code == 200
+    assert len(res.json()) == 1
 
 
 def test_chat_mesaj_ve_gecmis(client, test_db):

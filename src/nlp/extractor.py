@@ -4,24 +4,126 @@ import re
 from typing import Any
 
 
+def _tr_fold(text: str) -> str:
+    """Türkçe-duyarlı küçük harfe çevirme.
+
+    Python'un varsayılan ``str.lower()`` metodu 'İ' harfini 'i' + birleşik
+    nokta olarak dönüştürür ('i̇ndirim'), bu da 'indirim' gibi anahtar
+    kelime aramalarını sessizce başarısız kılar. ``casefold`` bu sorunu
+    çözer; ayrıca 'I' -> 'ı' eşlemesi de yapılır.
+    """
+    return text.replace("İ", "i").replace("I", "ı").casefold()
+
+
+# Kâr payı oranı bağlamını doğrulayan / eleyen anahtar kelimeler.
+# Katılım bankacılığında "%70 iştirak", "%75 nakit iade", "%80 ekspertiz
+# değeri (LTV)", "asgari ödeme %100" gibi ifadeler kâr payı ORANI DEĞİLDİR;
+# bu tür yakın bağlamlar elenmelidir.
+_PROFIT_RATE_CONTEXT = (
+    "kâr payı",
+    "kar payi",
+    "kâr oranı",
+    "kar orani",
+    "getiri",
+    "oran",  # "oranla", "hoş geldin oranı" vb.
+    "yıllık",
+    "aylık",
+)
+_PROFIT_RATE_DISQUALIFIERS = (
+    "iade",  # nakit iade / cashback
+    "indirim",
+    "komisyon",
+    "iştirak",  # sermaye iştiraki
+    "istirak",
+    "asgari ödeme",
+    "asgari odeme",
+    "ekspertiz",  # ekspertiz değerinin %X'i (LTV)
+    "değerine oranı",
+    "degerine orani",
+    "değerinin",
+    "degerinin",
+    "değer x",  # "Değer x %70" gibi LTV tabloları
+    "deger x",
+    "ltv",
+    "peşinat",
+    "pesinat",
+    "vergi",
+    "bakiyenin",  # "bakiyenin %50'sine kadar çekim"
+    "çekim",
+    "cekim",
+    "geri alınır",  # kâr payı clawback (ceza), oran değil
+    "geri alinir",
+    "alışveriş",  # mağaza alışverişinde %X (indirim/iade)
+    "alisveris",
+    "mağaza",
+    "magaza",
+    "değere oranı",  # LTV: taşıt/konut değerine oranı
+    "degere orani",
+    "değer <",  # LTV tablosu "değer < ... %70"
+    "deger <",
+    "devlet katkı",  # BES/çeyiz devlet katkısı
+    "devlet katki",
+    "devlet deste",  # "devlet desteği/desteğiyle" (ğ nedeniyle stem)
+    "mil kazan",  # mil/uçuş puanı kazanımı
+    "stopaj",  # stopaj/vergi oranı
+    "kdv",
+    "puan",  # altın puan / bonus puan
+    "harcama tutarı",  # ödül = harcamanın %X'i
+    "harcama tutari",
+    "harcamalar",
+    "ödül",
+    "odul",
+)
+# Katılım bankası kâr payı oranı için makul üst sınır (bunun üstü büyük
+# olasılıkla yanlış atıf: iade/indirim/iştirak yüzdesidir).
+_PROFIT_RATE_MAX = 50.0
+
+
 def extract_profit_share_rate(text: str) -> float | None:
-    """Metinden kâr payı oranını (%) bularak float değer olarak döner."""
+    """Metinden kâr payı oranını (%) bağlam-duyarlı biçimde çıkarır.
+
+    Yalnızca kâr payı/getiri/oran bağlamına yakın ve makul (<= %50) yüzdeler
+    kabul edilir; nakit iade, indirim, iştirak, ekspertiz/LTV, asgari ödeme
+    gibi ilgisiz yüzdeler elenir. Böylece "%75 nakit iade" veya
+    "%70 iştirak" gibi ifadeler yanlışlıkla kâr payı oranı sayılmaz.
+    """
     if not text:
         return None
 
-    patterns = [
-        r"(?:%|yüzde)\s*(\d+(?:[\.,]\d+)?)",
-        r"(\d+(?:[\.,]\d+)?)\s*(?:%|yüzde)",
-    ]
+    # Metindeki tüm yüzde ifadelerini konumlarıyla birlikte bul.
+    percent_pattern = re.compile(
+        r"(?:%|yüzde)\s*(\d+(?:[\.,]\d+)?)|(\d+(?:[\.,]\d+)?)\s*(?:%|yüzde)",
+        re.IGNORECASE,
+    )
 
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            val_str = match.group(1).replace(",", ".")
-            try:
-                return float(val_str)
-            except ValueError:
-                continue
+    for match in percent_pattern.finditer(text):
+        raw_num = match.group(1) or match.group(2) or ""
+        # Binlik ayraçlı sayı (ör. "10.000") bir ORAN değil, tutardır: ele.
+        if re.fullmatch(r"\d{1,3}\.\d{3}", raw_num):
+            continue
+        val_str = raw_num.replace(",", ".")
+        try:
+            value = float(val_str)
+        except ValueError:
+            continue
+
+        # Makul olmayan (çok yüksek) yüzdeleri ele.
+        if value <= 0 or value > _PROFIT_RATE_MAX:
+            continue
+
+        # İlgisiz bağlamı GENİŞ pencerede tara (indirim/iade/LTV/clawback/
+        # devlet katkısı/stopaj/kdv ifadeleri yüzdeden biraz uzakta olabilir).
+        disq_window = _tr_fold(text[max(0, match.start() - 90):min(len(text), match.end() + 70)])
+        if any(bad in disq_window for bad in _PROFIT_RATE_DISQUALIFIERS):
+            continue
+
+        # Kâr payı bağlamını DAR pencerede ara — oran, anahtar kelimeye
+        # bitişik olmalı (LTV/vergi tablolarındaki uzak yüzdelerden kaçınmak
+        # için pencere sıkı tutulur).
+        ctx_window = _tr_fold(text[max(0, match.start() - 28):min(len(text), match.end() + 20)])
+        if any(ctx in ctx_window for ctx in _PROFIT_RATE_CONTEXT):
+            return value
+
     return None
 
 
@@ -135,10 +237,11 @@ def extract_target_audience(text: str) -> str | None:
         "çiftçi": ["çiftçi", "tarım", "üretici"],
     }
 
+    folded = _tr_fold(text)
     detected = []
     for audience, words in keywords.items():
         for word in words:
-            if re.search(rf"\b{word}", text, re.IGNORECASE):
+            if re.search(rf"\b{re.escape(_tr_fold(word))}", folded):
                 detected.append(audience)
                 break
 
@@ -184,12 +287,14 @@ def extract_advantage(text: str) -> str | None:
 
     # Önce güçlü anahtar kelimeleri ara
     for sentence in sentences:
-        if any(kw in sentence.lower() for kw in strong_keywords):
+        folded = _tr_fold(sentence)
+        if any(_tr_fold(kw) in folded for kw in strong_keywords):
             return sentence
 
     # Güçlü yoksa zayıf olanları ara
     for sentence in sentences:
-        if any(kw in sentence.lower() for kw in weak_keywords):
+        folded = _tr_fold(sentence)
+        if any(_tr_fold(kw) in folded for kw in weak_keywords):
             return sentence
 
     # Eşleşen cümle bulunamadıysa ilk cümleyi dön
@@ -204,7 +309,7 @@ def classify_campaign_type(text: str) -> str:
     if not text:
         return "Diğer"
 
-    text_lower = text.lower()
+    text_lower = _tr_fold(text)
     categories = {
         # Kredi kartı gibi ödeme araçları taksit vb içerebildiğinden finansmandan önce taranmalıdır
         "Kart / Ödeme": [
@@ -250,7 +355,7 @@ def classify_campaign_type(text: str) -> str:
     }
 
     for category, keywords in categories.items():
-        if any(kw in text_lower for kw in keywords):
+        if any(_tr_fold(kw) in text_lower for kw in keywords):
             return category
 
     return "Diğer"

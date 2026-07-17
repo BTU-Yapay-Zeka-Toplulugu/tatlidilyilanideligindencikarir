@@ -38,7 +38,15 @@ class ChatbotService:
         retrieved = self.vector_store.query(question, top_k=top_k)
         contexts = [r["text"] for r in retrieved]
         sources = [
-            {"id": r["id"], "source_url": r.get("metadata", {}).get("source_url"), "score": r["score"]}
+            {
+                "id": r["id"],
+                "source_url": r.get("metadata", {}).get("source_url"),
+                "score": r["score"],
+                # Atıf (citation) üretimi için tam metadata korunur; aksi halde
+                # frontend banka/ürün adını "Bilinmeyen" olarak gösterir.
+                "metadata": r.get("metadata", {}),
+                "text": r["text"],
+            }
             for r in retrieved
         ]
         prompt = self._build_prompt(question, contexts)

@@ -5,10 +5,13 @@ Türkçe alan adlı response'ları ve chatbot REST + WebSocket akışını sunar
 """
 
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request, WebSocket
+from fastapi.concurrency import run_in_threadpool
+from fastapi.websockets import WebSocketDisconnect
 
 from src.backend.core.database import get_db
 from src.backend.core.vector_store import get_vector_store
@@ -18,13 +21,14 @@ from src.backend.schemas import (
     BankaKalemi,
     ChatYaniti,
     FinansmanKalemi,
-    KarsilastirmaKalemi,
     Mesaj,
 )
 from src.backend.services.campaign_service import CampaignService
 from src.backend.services.chatbot_service import ChatbotService
 
 router = APIRouter(tags=["frontend-bridge"])
+
+logger = logging.getLogger("frontend_bridge")
 
 _chat_history: dict[str, list[dict[str, Any]]] = {}
 
@@ -80,14 +84,21 @@ def finansman_ozeti(service: CampaignService = Depends(_campaign_service)):
     return items
 
 
-@router.get("/finansman/karsilastirma", response_model=list[KarsilastirmaKalemi])
+@router.get("/finansman/karsilastirma", response_model=list[FinansmanKalemi])
 def finansman_karsilastirma(
     banka_ids: list[str] | None = Query(None, alias="bankaIds"),
     urun_turu: str | None = Query(None, alias="urunTuru"),
     service: CampaignService = Depends(_campaign_service),
 ):
-    """Bankalara göre gruplanmış karşılaştırma verisini döner."""
-    groups: dict[str, KarsilastirmaKalemi] = {}
+    """Karşılaştırma tablosu ve grafiği için düz FinansmanKalemi listesi döner.
+
+    Frontend (KarsilastirmaTablosu, FinansmanGrafigi, csvExporter, sıralama
+    hook'u) veriyi düz `FinansmanKalemi[]` olarak tüketir; her satırda
+    doğrudan `tutar`, `karOrani`, `urunAdi`, `vade`, `tarih` alanları beklenir.
+    Bu nedenle burada bankaya göre iç içe (nested) gruplama YAPILMAZ; aksi
+    halde tablo/tutar/oran alanları boş (—/0) görünür.
+    """
+    items: list[FinansmanKalemi] = []
     for campaign in service.list_campaigns():
         if banka_ids and str(campaign.bank_id) not in banka_ids:
             continue
@@ -95,15 +106,8 @@ def finansman_karsilastirma(
         if urun_turu and (detail.campaign_type or "") != urun_turu:
             continue
         bank_name = _bank_adi(service, campaign.bank_id)
-        key = str(campaign.bank_id)
-        if key not in groups:
-            groups[key] = KarsilastirmaKalemi(
-                bankaId=key, bankaAdi=bank_name, urunler=[]
-            )
-        groups[key].urunler.append(
-            _to_finansman_kalemi(campaign, detail, bank_name)
-        )
-    return list(groups.values())
+        items.append(_to_finansman_kalemi(campaign, detail, bank_name))
+    return items
 
 
 @router.get("/finansman/bankalar", response_model=list[BankaKalemi])
@@ -173,11 +177,26 @@ def chat_temizle(payload: dict[str, Any]):
     return {"status": "ok", "oturumId": oturum_id}
 
 
+def _ws_chatbot(websocket: WebSocket) -> ChatbotService:
+    """Lifespan'da yüklenmiş (2GB GGUF) chatbot'u yeniden kullanır.
+
+    app.state.chatbot yoksa (ör. testte lifespan çalışmadıysa) tembel olarak
+    tek sefer oluşturur ve state'e yazar; böylece her WS bağlantısında modelin
+    yeniden yüklenmesi engellenir.
+    """
+    chatbot = getattr(websocket.app.state, "chatbot", None)
+    if chatbot is None:
+        chatbot = ChatbotService(vector_store=get_vector_store())
+        websocket.app.state.chatbot = chatbot
+    return chatbot
+
+
 @router.websocket("/ws/chat")
 async def ws_chat(websocket: WebSocket):
     """RAG chatbot streaming WebSocket'u (frontend useStreamingResponse ile uyumluluk)."""
     await websocket.accept()
-    chatbot: ChatbotService = ChatbotService(vector_store=get_vector_store())
+    logger.info("WS /ws/chat bağlantısı açıldı")
+    chatbot: ChatbotService = _ws_chatbot(websocket)
     try:
         while True:
             raw = await websocket.receive_text()
@@ -187,8 +206,33 @@ async def ws_chat(websocket: WebSocket):
                 data = {"mesaj": raw, "oturumId": "oturum-001"}
             mesaj = data.get("mesaj", "")
             oturum_id = data.get("oturumId") or "oturum-001"
-            result = chatbot.answer(mesaj, top_k=3)
+            logger.info("WS mesaj alındı (oturum=%s): %r", oturum_id, mesaj[:120])
+            try:
+                # LLM çıkarımı bloke edicidir; olay döngüsünü (ve WebSocket
+                # keepalive ping'lerini) kilitlememek için thread havuzunda
+                # çalıştırılır. Aksi halde uzun süren yanıtlarda bağlantı
+                # "keepalive ping timeout" ile düşer.
+                result = await run_in_threadpool(chatbot.answer, mesaj, 3)
+            except Exception:
+                # Sessizce yutma: hatayı logla ve frontend'in askıda kalmaması
+                # için 'bitti' göndererek akışı sonlandır.
+                logger.exception("WS chatbot.answer başarısız (oturum=%s)", oturum_id)
+                await websocket.send_json(
+                    {
+                        "tur": "chunk",
+                        "icerik": "Üzgünüm, yanıt üretilirken bir hata oluştu.",
+                    }
+                )
+                await websocket.send_json({"tur": "atiflar", "atiflar": []})
+                await websocket.send_json({"tur": "bitti"})
+                continue
             answer = result.get("answer", "")
+            logger.info(
+                "WS yanıt üretildi (oturum=%s, %d karakter, %d kaynak)",
+                oturum_id,
+                len(answer),
+                len(result.get("sources", [])),
+            )
             chunk_size = 24
             for i in range(0, len(answer), chunk_size):
                 await websocket.send_json(
@@ -203,5 +247,9 @@ async def ws_chat(websocket: WebSocket):
                 }
             )
             await websocket.send_json({"tur": "bitti"})
+    except WebSocketDisconnect:
+        logger.info("WS /ws/chat bağlantısı kapandı (istemci ayrıldı)")
+        return
     except Exception:
+        logger.exception("WS /ws/chat beklenmeyen hata")
         return

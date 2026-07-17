@@ -47,3 +47,7 @@ data/processed/*
 # Yerel modeller (büyük ikili dosyalar, repoya eklenmez)
 model/
 *.gguf
+
+# Frontend bağımlılıkları ve build çıktısı
+src/frontend/node_modules/
+src/frontend/dist/
