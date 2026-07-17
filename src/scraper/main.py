@@ -75,7 +75,7 @@ def run_pdf_crawling(banks: list[BankInfo],
             "=== PDF İşleme: %s (%d PDF adayı) ===",
             bank.name, len(pdf_urls),
         )
-        pdf_data = extract_pdfs_from_urls(bank, pdf_urls)
+        pdf_data = extract_pdfs_from_urls(bank, pdf_urls, max_pdfs=20)
         all_pdf_data.extend(pdf_data)
 
         # Siteye yük bindirmemek için bankalar arası bekleme

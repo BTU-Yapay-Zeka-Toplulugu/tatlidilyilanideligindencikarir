@@ -452,19 +452,29 @@ def crawl_and_extract_pdfs(
 
 
 def extract_pdfs_from_urls(
-    bank: BankInfo, pdf_urls: list[str]
+    bank: BankInfo, pdf_urls: list[str], max_pdfs: int = 20
 ) -> list[CampaignData]:
     """Önceden keşfedilmiş PDF URL'lerinden filtre + extraction yapar.
 
     ``recursive_discovery`` ile bulunmuş PDF havuzunu doğrudan işler
     (çift crawl yapmaz). Dönen kayıtlar ``source_type="pdf"`` ile işaretlenir.
+
+    ``max_pdfs``: bir bankada indirilip filtrelenecek MAKSİMUM PDF sayısı
+    (havuz çok büyükse — örn. 171 aday — tümünü indirmek yerine ilk N
+    aday işlenir; bu hem hız hem ağ yükü için gereklidir).
     """
     if not pdf_urls:
         logger.info("%s: keşifte PDF bulunamadı.", bank.name)
         return []
+    if len(pdf_urls) > max_pdfs:
+        logger.info(
+            "%s: %d PDF adayı var, ilk %d tanesi işlenecek (max_pdfs).",
+            bank.name, len(pdf_urls), max_pdfs,
+        )
+    selected = pdf_urls[:max_pdfs]
     candidates = [
         PdfCandidate(bank_id=bank.id, bank_name=bank.name, pdf_url=u)
-        for u in pdf_urls
+        for u in selected
     ]
     return _process_pdf_candidates(bank, candidates)
 
