@@ -7,7 +7,7 @@ from typing import Optional
 
 from src.scraper.bank_parser import load_bank_list
 from src.scraper.campaign_scraper import scrape_all_campaign_pages
-from src.scraper.config import RAW_DATA_DIR, REQUEST_DELAY
+from src.scraper.config import RAW_DATA_DIR, REQUEST_DELAY, MAX_PAGES_PER_BANK
 from src.scraper.models import BankInfo, CampaignData, CampaignPage
 from src.scraper.pdf_crawler import extract_pdfs_from_urls
 from src.scraper.recursive_discovery import (
@@ -103,6 +103,14 @@ def run_scraping(
         if not bank:
             logger.warning("Banka bulunamadı (id=%d), atlanıyor.", bank_id)
             continue
+
+        # Performans: banka başına işlenecek HTML sayfa sayısını sınırla
+        if len(bank_pages) > MAX_PAGES_PER_BANK:
+            logger.info(
+                "%s: %d HTML sayfa bulundu, ilk %d tanesi işlenecek.",
+                bank.name, len(bank_pages), MAX_PAGES_PER_BANK,
+            )
+            bank_pages = bank_pages[:MAX_PAGES_PER_BANK]
 
         logger.info(
             "=== Tarama: %s (%d sayfa) ===", bank.name, len(bank_pages)
