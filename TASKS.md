@@ -17,18 +17,20 @@
 - [x] Model performans değerlendirmesi (varsa test seti ile doğruluk ölçümü)
 
 ### Kişi 3 — Backend / Sistem Mühendisi
-- [ ] FastAPI backend endpoint'leri (veri okuma, karşılaştırma sorguları)
-- [ ] Karşılaştırma mantığının (en düşük oran, en avantajlı kampanya vb.) kodlanması
-- [ ] RAG için vektör DB entegrasyonu (Chroma/FAISS) ve chatbot backend'i
-- [ ] On-premise dağıtım (Docker Compose) kurulumu
-- [ ] Performans testleri ve API dokümantasyonu (Swagger/OpenAPI)
+- [x] FastAPI backend endpoint'leri (veri okuma, karşılaştırma sorguları)
+- [x] Karşılaştırma mantığının (en düşük oran, en avantajlı kampanya vb.) kodlanması
+- [x] RAG için vektör DB entegrasyonu (Chroma/FAISS) ve chatbot backend'i
+- [x] On-premise dağıtım (Docker Compose) kurulumu
+- [x] Performans testleri ve API dokümantasyonu (Swagger/OpenAPI)
 
 ### Kişi 4 — Ürün / Arayüz Mühendisi
-- [ ] Dashboard geliştirme (banka/ürün karşılaştırma tabloları, filtreler, grafikler)
-- [ ] Chatbot arayüzü (frontend) ve backend ile entegrasyon
-- [ ] Kullanıcı deneyimi ve arayüz tasarımı
+- [x] Dashboard geliştirme (banka/ürün karşılaştırma tabloları, filtreler, grafikler)
+- [x] Chatbot arayüzü (frontend) ve backend ile entegrasyon
+- [x] Kullanıcı deneyimi ve arayüz tasarımı
 - [ ] Demo videosu (maks. 5 dk) çekimi ve kurgusu
 - [ ] Sunum materyali (PDF + PPTX) hazırlığı ve proje dokümantasyonunun derlenmesi
+
+> **Not:** Demo videosu ve PPTX/PDF sunum dosyaları fiziksel/insan işidir; coding agent tarafından üretilemez (bkz. DECISIONS.md ADR-007). Tum kaynak kod, README, `docks/` dokümantasyonu ve haftalık commit'ler tamamlanmıştır.
 
 > **Not:** Roller birincil sorumluluk alanlarıdır; ekip küçük olduğundan darboğaz yaşanan noktalarda (özellikle bilgi çıkarımı ve entegrasyon haftalarında) tüm üyeler birbirine destek vermelidir.
 
