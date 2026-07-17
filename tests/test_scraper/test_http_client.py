@@ -5,10 +5,52 @@ from unittest.mock import patch, MagicMock
 import requests
 from bs4 import BeautifulSoup
 
-from src.scraper.http_client import fetch_page, parse_html, fetch_and_parse
+from src.scraper.http_client import (
+    _resolve_encoding,
+    fetch_page,
+    parse_html,
+    fetch_and_parse,
+)
 
 
 SAMPLE_HTML = "<html><head><title>Test</title></head><body><p>Merhaba</p></body></html>"
+
+
+def _mock_response(text=SAMPLE_HTML, content=None, headers=None, apparent="utf-8"):
+    """fetch_page için sahte requests.Response üretir."""
+    resp = MagicMock()
+    resp.text = text
+    resp.content = content if content is not None else text.encode("utf-8")
+    resp.headers = headers or {}
+    resp.apparent_encoding = apparent
+    resp.raise_for_status = MagicMock()
+    return resp
+
+
+class TestResolveEncoding:
+    """_resolve_encoding: charset başlığı olmayan Türkçe sitelerde mojibake önler."""
+
+    def test_uses_http_header_charset(self):
+        """Content-Type başlığındaki charset tercih edilir."""
+        resp = _mock_response(headers={"Content-Type": "text/html; charset=iso-8859-9"})
+        assert _resolve_encoding(resp) == "iso-8859-9"
+
+    def test_uses_meta_charset(self):
+        """Başlık yoksa HTML meta charset kullanılır."""
+        html = '<html><head><meta charset="utf-8"></head><body>ç</body></html>'
+        resp = _mock_response(content=html.encode("utf-8"), headers={})
+        assert _resolve_encoding(resp) == "utf-8"
+
+    def test_defaults_to_utf8_for_turkish(self):
+        """Charset bildirilmemiş geçerli UTF-8 içerik için UTF-8 döner (mojibake fix)."""
+        html = "<html><body>Hakkımızda Katılım Bankacılığı kâr payı</body></html>"
+        resp = _mock_response(content=html.encode("utf-8"), headers={})
+        assert _resolve_encoding(resp) == "utf-8"
+
+    def test_falls_back_to_apparent_for_non_utf8(self):
+        """UTF-8 çözülemiyorsa apparent_encoding'e düşer."""
+        resp = _mock_response(content=b"\xff\xfe\x00bad", headers={}, apparent="latin-1")
+        assert _resolve_encoding(resp) == "latin-1"
 
 
 class TestFetchPage:
@@ -17,11 +59,7 @@ class TestFetchPage:
     @patch("src.scraper.http_client.requests.get")
     def test_successful_fetch(self, mock_get: MagicMock) -> None:
         """Başarılı HTTP isteğinde HTML döner."""
-        mock_response = MagicMock()
-        mock_response.text = SAMPLE_HTML
-        mock_response.apparent_encoding = "utf-8"
-        mock_response.raise_for_status = MagicMock()
-        mock_get.return_value = mock_response
+        mock_get.return_value = _mock_response()
 
         result = fetch_page("https://example.com")
         assert result == SAMPLE_HTML

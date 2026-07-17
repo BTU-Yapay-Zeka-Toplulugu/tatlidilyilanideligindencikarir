@@ -117,3 +117,46 @@ class TestDiscoverLinksFromPage:
         for page in pages:
             assert page.bank_id == 1
             assert page.bank_name == "TEST BANKA"
+
+
+class TestBinaryAndInstitutional:
+    """PDF/ikili dosya elemesi ve kurumsal sayfa fallback keşfi testleri."""
+
+    def test_excludes_pdf_and_binary_links(self) -> None:
+        """PDF gibi ikili dosyalar kampanya keşfinde hariç tutulur."""
+        from src.scraper.discovery import _is_binary_url
+
+        assert _is_binary_url("https://x.com/assets/ucret-formu.pdf") is True
+        assert _is_binary_url("https://x.com/logo.png") is True
+        assert _is_binary_url("https://x.com/kampanyalar") is False
+
+    def test_pdf_campaign_link_skipped(self) -> None:
+        """Link metni kampanya kelimesi içerse de PDF hedefi atlanır."""
+        html = (
+            '<html><body>'
+            '<a href="/assets/pdfs/Urun ve Hizmet Ucretleri.pdf">Ürün ve Hizmet Ücretleri</a>'
+            '<a href="/kampanyalar">Kampanyalar</a>'
+            '</body></html>'
+        )
+        soup = BeautifulSoup(html, "html.parser")
+        pages = discover_links_from_page(SAMPLE_BANK, soup)
+        urls = [p.page_url for p in pages]
+        assert not any(u.lower().endswith(".pdf") for u in urls)
+        assert any("kampanyalar" in u for u in urls)
+
+    def test_institutional_fallback_finds_pages(self) -> None:
+        """Kampanya sayfası olmayan minimal sitede kurumsal sayfalar bulunur."""
+        from src.scraper.discovery import discover_institutional_pages
+
+        html = (
+            '<html><body>'
+            '<a href="/hakkimizda">Hakkımızda</a>'
+            '<a href="/katilim-bankaciligi">Katılım Bankacılığı</a>'
+            '<a href="/iletisim">İletişim</a>'
+            '</body></html>'
+        )
+        soup = BeautifulSoup(html, "html.parser")
+        pages = discover_institutional_pages(SAMPLE_BANK, soup)
+        urls = [p.page_url for p in pages]
+        assert any("hakkimizda" in u for u in urls)
+        assert any("katilim-bankaciligi" in u for u in urls)

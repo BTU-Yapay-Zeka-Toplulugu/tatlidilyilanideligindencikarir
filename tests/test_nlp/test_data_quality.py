@@ -12,14 +12,36 @@ import pytest
 
 from src.nlp.extractor import extract_all_campaign_details, extract_profit_share_rate
 
-RAW_FILE = os.path.join("data", "raw", "campaigns_20260716_205849.json")
+# Öncelik: 10 bankalı birleştirilmiş temiz veri seti; yoksa ham dosyaya düş.
+_CANDIDATE_FILES = [
+    os.path.join("data", "processed", "campaigns_cleaned.json"),
+    os.path.join("data", "raw", "campaigns_merged_10banks.json"),
+    os.path.join("data", "raw", "campaigns_20260716_205849.json"),
+]
+
+
+def _dataset_path():
+    for path in _CANDIDATE_FILES:
+        if os.path.exists(path):
+            return path
+    return None
 
 
 def _load_raw():
-    if not os.path.exists(RAW_FILE):
-        pytest.skip("Ham veri seti bulunamadı")
-    with open(RAW_FILE, encoding="utf-8") as fh:
+    path = _dataset_path()
+    if path is None:
+        pytest.skip("Veri seti bulunamadı")
+    with open(path, encoding="utf-8") as fh:
         return json.load(fh)
+
+
+def test_veri_setinde_10_katilim_bankasi_bulunur():
+    """Yarışma şartı: BDDK listesindeki 10 katılım bankasının tamamı temsil edilmeli."""
+    records = _load_raw()
+    bank_ids = {r["bank_id"] for r in records}
+    eksik = set(range(1, 11)) - bank_ids
+    assert eksik == set(), f"Eksik banka id'leri: {sorted(eksik)}"
+    assert len(bank_ids) >= 10
 
 
 def test_gercek_veride_makul_olmayan_oran_uretilmez():

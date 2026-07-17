@@ -19,6 +19,7 @@
 | 2026-07-17 | Kâr payı oranı %70–%100 imkânsız değerler | ilk `%N` bağlamsız alınıyor (iade/iştirak/LTV/KDV) | bağlam-duyarlı + makul-band + binlik-guard | önce 10 adet>%50 → sonra 0 |
 | 2026-07-17 | Büyük-İ kelimeler eşleşmiyor (sınıflandırma/eleme) | `str.lower()` "İ"→"i̇" (birleşik nokta) | Türkçe-duyarlı `_tr_fold` casefold | `İHTİYAÇ FİNANSMANI`→doğru kategori |
 | 2026-07-17 | `pytest tests/` collection kırılıyor | eski Streamlit test'leri kaldırılan modülleri import ediyor | ölü `tests/test_frontend/*` kaldırıldı | 113 passed |
+| 2026-07-17 | Sadece 9 banka (10 olmalı - yarışma şartı) | ADİL Katılım keşifte 0 sayfa (kampanya yok/PDF/encoding) | scraper: encoding fix + PDF eleme + kurumsal fallback; ADİL tarandı+seed+reprocess | 10 banka API/dashboard/RAG'de, 121 passed |
 
 ## Şu An Neredeyiz
 

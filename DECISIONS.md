@@ -131,6 +131,23 @@ Format:
 - `tests/test_frontend/*` (eski Streamlit `api_client`/`ui_helpers` modüllerini import eden 4 ölü test) kaldırıldı; frontend artık React (ADR-008) olduğundan bu modüller yok ve testler `pytest tests/`'i toplama (collection) aşamasında kırıyordu.
 - **Sonuç:** `pytest tests/` → 113 passed.
 
+## ADR-010: 10. Banka (ADİL Katılım) Eksikliği ve Scraper Sağlamlaştırması
+
+- **Tarih:** 17 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** Yarışma, BDDK listesindeki **10** katılım bankasının kullanılmasını şart koşuyor; ancak sistemde yalnızca 9 banka vardı. Kök sebep: `data/bank_sites.txt` 10 bankayı doğru listelese de **ADİL KATILIM (bank_id=1)** ilk tarama sırasında keşif aşamasında 0 sayfa ürettiği için hiç veri toplanmamış (ne raw, ne processed, ne DB).
+- **Kök sebep analizi (kanıta dayalı):**
+  1. **Keşif boşluğu:** ADİL yeni lisanslı, minimal içerikli bir kurumsal sitedir; hiç "kampanya" anahtar kelimeli sayfası yok (yalnızca Hakkımızda / Katılım Bankacılığı / bir PDF). Discovery 0 sayfa buluyordu.
+  2. **PDF yanlış eşleşmesi:** Tek "kampanya" bağı, link metni "Ürün ve Hizmet Ücretleri" olan bir **.pdf** idi; HTML olarak parse edilemediğinden 0 içerik veriyordu.
+  3. **Encoding hatası:** `fetch_page` `response.apparent_encoding` (chardet) kullanıyordu; charset başlığı olmayan ADİL sitesinde bu yanlış tahmin edilip **mojibake** ("Hakk─▒m─▒zda") üretiyordu.
+- **Karar/Çözüm (frontend'e ve mevcut 9 bankaya dokunmadan):**
+  - **Encoding:** `http_client._resolve_encoding` eklendi — sırayla HTTP başlığı charset → HTML `<meta charset>` → UTF-8 (kayıpsız çözülüyorsa) → chardet. Türkçe siteler artık doğru çözülüyor.
+  - **PDF/ikili eleme:** discovery'de `_is_binary_url` ile `.pdf/.png/...` uzantılı bağlar (parse edilemez) atlanıyor.
+  - **Kurumsal fallback:** `discover_institutional_pages` — hiç kampanya sayfası bulunamayan bankalar için Hakkımızda/Katılım Bankacılığı/Ürün-Hizmet gibi kurumsal sayfalar toplanır; böylece **her banka sistemde temsil edilir**.
+  - ADİL gerçek olarak tarandı (2 sayfa), mevcut veriyle birleştirilip temizlendi ve DB'ye seed + NLP reprocess edildi.
+- **Doğrulama:** `python -m src.scraper.main 1` → ADİL 2 sayfa, doğru Türkçe encoding. `/finansman/bankalar` → 10 banka; `/finansman/ozet` ve `/finansman/karsilastirma` → 124 kayıt, ADİL dahil, 0 undefined alan. Vektör indeksinde ADİL sayfaları retrieve ediliyor (RAG). Birim testler: encoding çözümü (4), PDF/kurumsal keşif (3), 10-banka veri seti (1). `pytest tests/` → 121 passed.
+- **Sonuçlar:** ADİL institutional sayfaları kâr payı/tutar içermez (tutar/karOrani=0), bu doğru davranıştır (kampanya değil kurumsal içerik). Scraper artık minimal/yeni bankalarda da veri toplayabilir.
+
 ## ADR-007: Demo Videosu ve Sunum (PDF/PPTX) Üretimi
 
 - **Tarih:** 16 Temmuz 2026

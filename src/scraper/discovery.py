@@ -16,6 +16,19 @@ logger = logging.getLogger(__name__)
 # robots.txt / sitemap içindeki URL deseni
 SITEMAP_URL_PATTERN = re.compile(r"<loc>(https?://[^<]+)</loc>")
 
+# HTML olmayan (parse edilemeyen) ikili dosya uzantıları — keşifte atlanır.
+BINARY_EXTENSIONS = (
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+    ".zip", ".rar", ".7z", ".jpg", ".jpeg", ".png", ".gif",
+    ".svg", ".webp", ".mp4", ".mp3", ".exe", ".apk",
+)
+
+
+def _is_binary_url(url: str) -> bool:
+    """URL bir ikili/HTML-olmayan dosyaya mı işaret ediyor kontrol eder."""
+    path = urlparse(url).path.lower()
+    return path.endswith(BINARY_EXTENSIONS)
+
 
 def _is_same_domain(base_url: str, candidate_url: str) -> bool:
     """İki URL'nin aynı domain'e ait olup olmadığını kontrol eder."""
@@ -41,6 +54,68 @@ def _link_text_contains_campaign_keyword(text: str) -> bool:
     return any(kw in text_lower for kw in turkish_keywords)
 
 
+# Kampanya sayfası bulunamayan (yeni/minimal siteli) bankalar için
+# kurumsal/ürün bilgi sayfası anahtar kelimeleri (fallback keşif).
+INSTITUTIONAL_KEYWORDS = [
+    "hakkimizda",
+    "hakkinda",
+    "katilim-bankaciligi",
+    "katilim-bankacilik",
+    "urun",
+    "urunler",
+    "hizmet",
+    "ucret",
+    "ucretlendirme",
+    "sozlesme",
+    "bilgilendirme",
+]
+
+
+def _url_contains_institutional_keyword(url: str) -> bool:
+    """URL yolunda kurumsal/ürün bilgi anahtar kelimesi olup olmadığını kontrol eder."""
+    path = urlparse(url).path.lower()
+    return any(keyword in path for keyword in INSTITUTIONAL_KEYWORDS)
+
+
+def discover_institutional_pages(
+    bank: BankInfo, soup: BeautifulSoup
+) -> list[CampaignPage]:
+    """Kampanya sayfası bulunamadığında kurumsal/ürün bilgi sayfalarını keşfeder.
+
+    Yeni lisanslı veya minimal içerikli bankaların (ör. ADİL Katılım) sitesinde
+    kampanya sayfası olmayabilir; bu durumda her bankanın sistemde temsil
+    edilmesi için Hakkımızda/Katılım Bankacılığı/Ürün-Hizmet Ücretleri gibi
+    kurumsal sayfalar toplanır.
+    """
+    found_pages: list[CampaignPage] = []
+    seen_urls: set[str] = set()
+
+    for a_tag in soup.find_all("a", href=True):
+        href = a_tag["href"]
+        full_url = urljoin(bank.url, href).rstrip("/")
+        if full_url in seen_urls:
+            continue
+        seen_urls.add(full_url)
+        if not _is_same_domain(bank.url, full_url):
+            continue
+        if _is_binary_url(full_url):
+            continue
+        parsed = urlparse(full_url)
+        if not parsed.path or parsed.path == "/":
+            continue
+        if _url_contains_institutional_keyword(full_url):
+            found_pages.append(
+                CampaignPage(
+                    bank_id=bank.id,
+                    bank_name=bank.name,
+                    page_url=full_url,
+                    page_title=a_tag.get_text(strip=True) or None,
+                )
+            )
+
+    return found_pages
+
+
 def discover_links_from_page(
     bank: BankInfo, soup: BeautifulSoup
 ) -> list[CampaignPage]:
@@ -59,6 +134,10 @@ def discover_links_from_page(
 
         # Farklı domain'e ait linkleri atla
         if not _is_same_domain(bank.url, full_url):
+            continue
+
+        # İkili (PDF/görsel vb.) dosyaları atla — HTML olarak parse edilemez.
+        if _is_binary_url(full_url):
             continue
 
         # Fragment ve query-only linkleri atla
@@ -135,6 +214,20 @@ def discover_campaign_pages(bank: BankInfo) -> list[CampaignPage]:
             if page.page_url not in seen_urls:
                 seen_urls.add(page.page_url)
                 all_pages.append(page)
+
+        # 3. Fallback: hiç kampanya sayfası bulunamadıysa kurumsal/ürün
+        # bilgi sayfalarını keşfet (her bankanın sistemde temsil edilmesi için).
+        if not all_pages:
+            institutional = discover_institutional_pages(bank, soup)
+            for page in institutional:
+                if page.page_url not in seen_urls:
+                    seen_urls.add(page.page_url)
+                    all_pages.append(page)
+            if institutional:
+                logger.info(
+                    "%s: kampanya sayfası yok; %d kurumsal sayfa (fallback) bulundu.",
+                    bank.name, len(institutional),
+                )
 
     logger.info(
         "%s: toplam %d kampanya sayfası keşfedildi. Sınır: %d.",
