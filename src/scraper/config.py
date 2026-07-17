@@ -31,7 +31,7 @@ DEFAULT_HEADERS = {
     "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
 }
 
-# Kampanya sayfası keşfi için anahtar kelimeler
+# Kampanya sayfası keşfi için anahtar kelimeler (CONFIG tabanlı — kod gömülü değil)
 CAMPAIGN_KEYWORDS = [
     "kampanya",
     "kampanyalar",
@@ -44,6 +44,28 @@ CAMPAIGN_KEYWORDS = [
     "oranlar",
     "oran",
 ]
+
+# Dinamik/recursive keşif için anahtar kelimeler (config.py'de tutulur ki
+# yeni banka eklenince kolayca güncellensin — kod içine gömülü DEĞİL).
+DISCOVERY_KEYWORDS = [
+    "kampanya", "kampanyalar", "kampanyalari", "kampanyaları",
+    "firsat", "firsatlar", "firsa",
+    "duyuru", "duyurular",
+    "kar-payi", "kar_payi", "karpayi", "kâr payı", "kâr payi",
+    "kar-orani", "kâr oranı", "kâr orani",
+    "oran", "oranlar", "orani", "oranı",
+    "finansman", "finansmanlar",
+    "urun", "urunler", "ürün", "ürünler",
+    "tarife", "ucret", "ücret", "ucretler", "ücretler",
+    "kredi", "krediler",
+    "kâr", "kar", "getiri",
+    "vade", "taksit", "avantaj",
+]
+
+# Recursive keşif limitleri (sonsuz döngü / aşırı crawl'ı engeller)
+MAX_CRAWL_DEPTH = 3
+MAX_CRAWL_PAGES = 60
+CRAWL_PER_PAGE_TIMEOUT = 30
 
 # Kampanya metin çıkarımı için minimum karakter sayısı
 MIN_CONTENT_LENGTH = 50

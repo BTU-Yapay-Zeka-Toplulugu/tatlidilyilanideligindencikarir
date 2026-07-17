@@ -448,6 +448,31 @@ def crawl_and_extract_pdfs(
         logger.info("%s: recursive crawl'de PDF bulunamadı.", bank.name)
         return []
 
+    return _process_pdf_candidates(bank, candidates)
+
+
+def extract_pdfs_from_urls(
+    bank: BankInfo, pdf_urls: list[str]
+) -> list[CampaignData]:
+    """Önceden keşfedilmiş PDF URL'lerinden filtre + extraction yapar.
+
+    ``recursive_discovery`` ile bulunmuş PDF havuzunu doğrudan işler
+    (çift crawl yapmaz). Dönen kayıtlar ``source_type="pdf"`` ile işaretlenir.
+    """
+    if not pdf_urls:
+        logger.info("%s: keşifte PDF bulunamadı.", bank.name)
+        return []
+    candidates = [
+        PdfCandidate(bank_id=bank.id, bank_name=bank.name, pdf_url=u)
+        for u in pdf_urls
+    ]
+    return _process_pdf_candidates(bank, candidates)
+
+
+def _process_pdf_candidates(
+    bank: BankInfo, candidates: list[PdfCandidate]
+) -> list[CampaignData]:
+    """PDF adaylarını indirir, filtreler, metne çevirir → CampaignData listesi."""
     results: list[CampaignData] = []
     for i, cand in enumerate(candidates, 1):
         logger.info(

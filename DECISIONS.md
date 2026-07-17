@@ -163,6 +163,22 @@ Format:
 - **Alternatifler:** Statik PDF URL map (reddedildi — kırılgan), sadece sitemap'ten PDF (eksik kalır — reddedildi), her PDF'i işleme al (gürültü — reddedildi, filtre katmanı zorunlu).
 - **Sonuçlar:** Tüm bankalar için PDF'i olanlar dinamik bulunup filtrelenip çıkarılır; veri HTML kaynaklılarla aynı şemada. `pytest tests/` güncellendi.
 
+## ADR-012: Statik Discovery → Tam Dinamik/Recursive Keşif (HTML + PDF Birlikte)
+
+- **Tarih:** 17 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** Mevcut `discover_campaign_pages` (discovery.py:197) (1) sitemap'ten limitsiz tüm URL'leri çekiyor (Kuveyt Türk'de 468 URL), (2) sabit `CAMPAIGN_KEYWORDS` path listesine bağımlı, (3) PDF bağlarını `_is_binary_url` ile **atlıyor** (recursive takip yok). Farklı menü yapısı olan bankalarda kampanyalar/PDF'ler kaçıyor; ayrıca sayfa başına ilerleme logu olmadığından takılma noktası görünmüyor.
+- **Karar:** Yeni tek merkezi `recursive_discovery.py` modülü kuruldu:
+  - **Statik path/liste YOK.** Ana URL'den BFS; her sayfadaki TÜM `<a>`/`<iframe>`/`<embed>` bağları toplanır.
+  - **Anahtar kelime filtresi CONFIG'te** (`config.py → DISCOVERY_KEYWORDS`) — kod gömülü değil.
+  - **Limitler ZORUNLU:** `max_depth` (vars. 3), `max_pages` (vars. 60), her HTTP isteği `REQUEST_TIMEOUT` (30s) + retry. Ziyaret edilen URL'ler `set`'te; aynı domain dışına çıkılmaz; sonsuz döngü imkânsız.
+  - **PDF + HTML aynı akışta:** PDF bağları havuzda toplanır (`pdf_crawler` filtre/extract'a gider); HTML kampanya sayfaları `CampaignPage` olur.
+  - **Per-page log:** her ziyaret `visiting: {url} (depth=d, pages=n/max)` basar → takılma anında görünür.
+  - Eski `discover_campaign_pages` / `try_sitemap` / `_url_contains_campaign_keyword` statik mantığı **kaldırıldı**; `main.py` yeni `discover_pages_recursive`'e bağlandı.
+- **Gerekçe:** Dinamik + limitli recursive crawl, site yapısı değişse de kampanya/PDF'leri bulur; sayfa başına log ve katı limitler "donma" sorununu önler.
+- **Alternatifler:** Sitemap-only (468 URL işleyip yavaşlar, PDF bulamaz — reddedildi), sabit path listesi (kırılgan — reddedildi).
+- **Sonuçlar:** Tüm bankalar tek fonksiyonla taranır; HTML ve PDF kaynakları birleşik veri setine girer. `pytest` güncellendi.
+
 ## ADR-007: Demo Videosu ve Sunum (PDF/PPTX) Üretimi
 
 - **Tarih:** 16 Temmuz 2026

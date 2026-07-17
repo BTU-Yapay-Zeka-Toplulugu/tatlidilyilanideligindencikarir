@@ -121,13 +121,27 @@ def test_recursive_crawler_collects_pdf_links():
     assert len(candidates) >= 2
 
 
-def test_collect_pdf_seeds_includes_bank_home():
-    """PDF seed'leri banka ana sayfasını ve keşfedilen sayfaları içermeli."""
-    from src.scraper.main import _collect_pdf_seeds
+def test_extract_pdfs_from_urls_filters_irrelevant():
+    """Keşfedilen PDF URL'lerinden ilgisiz olanlar (ücret tablosu vb.)
+    filtrelenip yalnızca kampanya içerikliler işlenmeli."""
+    from src.scraper.pdf_crawler import (
+        PdfCandidate,
+        extract_pdfs_from_urls,
+    )
 
-    banks = [BankInfo(id=5, name="BANK5", url="https://b5.com/")]
-    pages = [CampaignPage(bank_id=5, bank_name="BANK5",
-                          page_url="https://b5.com/kampanya")]
-    seeds = _collect_pdf_seeds(banks, pages)
-    assert seeds[5][0] == "https://b5.com/"
-    assert "https://b5.com/kampanya" in seeds[5]
+    bank = BankInfo(id=5, name="BANK5", url="https://b5.com/")
+
+    # İlgisiz PDF (ücret tablosu) — indirme başarısız sayılır ki filtre
+    # zaten metin üzerinden çalışır; burada download'ı mock'layıp filtreyi
+    # doğruluyoruz.
+    from src.scraper import pdf_crawler
+
+    def fake_download(cand):
+        # İçerik "ücret tablosu" → kampanya kelimesi yok → elenir
+        return b"%PDF-1.4\n Urun ve Hizmet Ucret Tablosu \n KVKK aydinlatma"
+
+    with patch.object(pdf_crawler, "download_pdf", side_effect=fake_download):
+        data = extract_pdfs_from_urls(
+            bank, ["https://b5.com/ucret.pdf"]
+        )
+    assert data == []

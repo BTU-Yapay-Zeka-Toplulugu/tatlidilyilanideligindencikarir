@@ -51,3 +51,6 @@ model/
 # Frontend bağımlılıkları ve build çıktısı
 src/frontend/node_modules/
 src/frontend/dist/
+
+# Yerel test PostgreSQL kümesi (E2E testleri için)
+.pgtest/
