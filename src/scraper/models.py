@@ -38,6 +38,7 @@ class CampaignData:
     source_url: str
     page_title: str
     raw_text: str
+    source_type: str = "html"
     scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
     content_length: int = 0
 

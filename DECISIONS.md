@@ -148,6 +148,21 @@ Format:
 - **Doğrulama:** `python -m src.scraper.main 1` → ADİL 2 sayfa, doğru Türkçe encoding. `/finansman/bankalar` → 10 banka; `/finansman/ozet` ve `/finansman/karsilastirma` → 124 kayıt, ADİL dahil, 0 undefined alan. Vektör indeksinde ADİL sayfaları retrieve ediliyor (RAG). Birim testler: encoding çözümü (4), PDF/kurumsal keşif (3), 10-banka veri seti (1). `pytest tests/` → 121 passed.
 - **Sonuçlar:** ADİL institutional sayfaları kâr payı/tutar içermez (tutar/karOrani=0), bu doğru davranıştır (kampanya değil kurumsal içerik). Scraper artık minimal/yeni bankalarda da veri toplayabilir.
 
+## ADR-011: Dinamik & Recursive PDF Crawler (Statik Mapping Yasak)
+
+- **Tarih:** 17 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** Mevcut scraper bazı bankaların kampanya sayfalarını tararken HTML yerine doğrudan bir PDF'e (broşür, oran tablosu, kampanya şartları) yönlendiriyor. ADİL başlığında daha önce `.pdf` bağları keşifte atlanıyordu (`_is_binary_url`). Banka arayüzleri/menüleri/PDF konumları sürekli değiştiğinden **statik URL/selector mapping kesinlikle yapılmayacak**.
+- **Dinamik Keşif Stratejisi (Collect & Filter):**
+  1. **Seed:** Her banka için başlangıç noktaları = ana sayfa + keşfedilen kampanya/kurumsal sayfalar (mevcut `discover_campaign_pages` çıktısı). Hiçbir hardcoded PDF URL yok.
+  2. **Recursive crawl:** Belirli `depth` limitiyle, yalnızca **aynı domain** içinde kalan `<a href>` ve `<iframe>/<embed src>` bağları takip edilir; PDF bağları (`.pdf` uzantısı VEYA `Content-Type: application/pdf`) bir havuzda toplanır. Domain dışına çıkılmaz, fragment/query-only ve ikili-olmayan dosyalar atlanır.
+  3. **Collect & Filter:** Havuzdaki her PDF indirilir; ilk sayfalarının metni (pdfplumber) çıkarılıp **kampanya/oran anahtar kelimesi** ("kâr payı", "finansman oranı", "kampanya", "vade", "oran" vb.) ile skorlanır. Eşik altı (aydınlatma metni, sözleşme, ücret tarifesi gibi ilgisiz) PDF'ler havuzdan elenir.
+  4. **Extraction:** Kalan PDF'ler tam metne çevrilir (pdfplumber; taranmış görüntü tespit edilirse loglanır, OCR *yalnızca gerekiyorsa* eklenir — şimdilik pdfplumber). Çıkan ham metin **aynı** `data_cleaner` + NLP çıkarım hattından geçer (HTML ve PDF ayrımı yok).
+- **Karar:** Yeni modül `src/scraper/pdf_crawler.py` (RecursivePdfCrawler) mevcut pipeline'a **yeni bir kaynak tipi** (`CampaignData.source_type="pdf"`) olarak eklenir; `main.run_pipeline` hem HTML hem PDF keşfini birleştirir. Hata (indirme/parse) bankayı çökertmez: loglanır, o PDF atlanır, devam edilir.
+- **Gerekçe:** Statik mapping site değişiminde kırılır; recursive + keyword filtreleme otonom ve sürdürülebilir. pdfplumber/PyMuPDF açık kaynak; ücretli OCR/parse API yasak.
+- **Alternatifler:** Statik PDF URL map (reddedildi — kırılgan), sadece sitemap'ten PDF (eksik kalır — reddedildi), her PDF'i işleme al (gürültü — reddedildi, filtre katmanı zorunlu).
+- **Sonuçlar:** Tüm bankalar için PDF'i olanlar dinamik bulunup filtrelenip çıkarılır; veri HTML kaynaklılarla aynı şemada. `pytest tests/` güncellendi.
+
 ## ADR-007: Demo Videosu ve Sunum (PDF/PPTX) Üretimi
 
 - **Tarih:** 16 Temmuz 2026

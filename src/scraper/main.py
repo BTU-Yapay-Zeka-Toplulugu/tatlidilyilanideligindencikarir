@@ -10,6 +10,7 @@ from src.scraper.campaign_scraper import scrape_all_campaign_pages
 from src.scraper.config import RAW_DATA_DIR, REQUEST_DELAY
 from src.scraper.discovery import discover_campaign_pages
 from src.scraper.models import BankInfo, CampaignData, CampaignPage
+from src.scraper.pdf_crawler import crawl_and_extract_pdfs
 from src.scraper.storage import (
     save_campaign_data_csv,
     save_campaign_data_json,
@@ -45,6 +46,50 @@ def run_discovery(banks: list[BankInfo]) -> list[CampaignPage]:
 
     logger.info("Toplam %d kampanya sayfası keşfedildi.", len(all_pages))
     return all_pages
+
+
+def _collect_pdf_seeds(banks: list[BankInfo],
+                       pages: list[CampaignPage]) -> dict[int, list[str]]:
+    """Her banka için PDF crawler'ı başlatacak seed URL'lerini toplar.
+
+    Seed = banka ana sayfası + keşfedilen kampanya/kurumsal sayfalar.
+    Statik mapping YOK — dinamik keşif çıktısı kullanılır (ADR-011).
+    """
+    seeds: dict[int, list[str]] = {}
+    bank_map = {b.id: b for b in banks}
+    for bank in banks:
+        seeds.setdefault(bank.id, [bank.url])
+    for page in pages:
+        if page.bank_id in seeds:
+            seeds[page.bank_id].append(page.page_url)
+    # Benzersizle
+    for bid in seeds:
+        seeds[bid] = list(dict.fromkeys(seeds[bid]))
+    return seeds
+
+
+def run_pdf_crawling(banks: list[BankInfo],
+                     pages: list[CampaignPage]) -> list[CampaignData]:
+    """Dinamik & recursive PDF crawler'ı tüm bankalar için çalıştırır."""
+    seeds = _collect_pdf_seeds(banks, pages)
+    bank_map = {b.id: b for b in banks}
+    all_pdf_data: list[CampaignData] = []
+
+    for bank_id, seed_urls in seeds.items():
+        bank = bank_map.get(bank_id)
+        if not bank:
+            continue
+        logger.info(
+            "=== PDF Crawl: %s (%d seed) ===", bank.name, len(seed_urls)
+        )
+        pdf_data = crawl_and_extract_pdfs(bank, seed_urls)
+        all_pdf_data.extend(pdf_data)
+
+        # Siteye yük bindirmememek için bankalar arası bekleme
+        time.sleep(REQUEST_DELAY)
+
+    logger.info("Toplam %d kampanya PDF metni çıkarıldı.", len(all_pdf_data))
+    return all_pdf_data
 
 
 def run_scraping(
@@ -106,8 +151,13 @@ def run_pipeline(bank_ids: Optional[list[int]] = None) -> None:
     # Keşfedilen sayfaları kaydet
     save_discovered_pages_json(pages)
 
-    # 3. Kampanya metinlerini çıkar
+    # 3. Kampanya metinlerini çıkar (HTML)
     data = run_scraping(banks, pages)
+
+    # 3b. Dinamik & recursive PDF crawler (yeni kaynak tipi)
+    pdf_data = run_pdf_crawling(banks, pages)
+    data.extend(pdf_data)
+
     if not data:
         logger.warning("Hiç kampanya metni çıkarılamadı.")
         return
