@@ -358,21 +358,29 @@ def download_pdf(candidate: PdfCandidate) -> Optional[bytes]:
 
 
 def _run_with_timeout(func, timeout: int, label: str = "işlem"):
-    """Bir fonksiyonu ayrı thread'de çalıştırır; süre aşımında None döner.
+    """Bir fonksiyonu ayrı (daemon) thread'de çalıştırır; süre aşımında None döner.
 
     pdfplumber tek bir sayfada TAKILABİLDİĞİNDEN (C seviyesinde blok) VEYA
     ``requests.get`` DNS çözümünde takılabildiğinden bu guard olmadan tüm
     crawl donar. Süre aşımı güvenliği için zorunludur (ADR-011 donma riski).
-    """
-    from concurrent.futures import ThreadPoolExecutor
 
-    with ThreadPoolExecutor(max_workers=1) as ex:
-        future = ex.submit(func)
-        try:
-            return future.result(timeout=timeout)
-        except Exception as e:  # zaman aşımı veya hatası
-            logger.warning("PDF %s zaman aşımı/hatası (%ss): %s", label, timeout, e)
-            return None
+    ÖNEMLİ: süre aşımında worker thread iptal EDİLEMEZ; bu yüzden executor
+    ``shutdown(wait=False)`` ile kapatılır ve thread daemon yapılır — aksi
+    halde ``with`` bloğu bitişinde takılan worker'ı beklemeye alıp donmaya
+    neden olur.
+    """
+    from concurrent.futures import Future, ThreadPoolExecutor
+
+    ex = ThreadPoolExecutor(max_workers=1, thread_name_prefix="pdf_guard")
+    future: Future = ex.submit(func)
+    try:
+        return future.result(timeout=timeout)
+    except Exception as e:  # zaman aşımı veya hatası
+        logger.warning("PDF %s zaman aşımı/hatası (%ss): %s", label, timeout, e)
+        return None
+    finally:
+        # Takılan worker'ı beklemeden kapat (daemon thread çöp toplayıcı alır).
+        ex.shutdown(wait=False)
 
 
 def _extract_first_pages_text(pdf_bytes: bytes, pages: int = PDF_SCAN_PAGES
