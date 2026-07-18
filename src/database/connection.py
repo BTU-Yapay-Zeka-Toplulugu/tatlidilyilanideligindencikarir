@@ -2,7 +2,7 @@
 
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 
 # .env dosyasını yükle
@@ -28,7 +28,35 @@ def get_db() -> Session:
 
 
 def init_db() -> None:
-    """Modellerdeki tüm veritabanı tablolarını oluşturur."""
+    """Modellerdeki tüm veritabanı tablolarını oluşturur.
+
+    Mevcut tablolarda yeni eklenen kolonlar (ör. start_date/end_date) için
+    idempotent ALTER migration uygular — create_all yalnızca yeni tablo
+    oluşturur, var olan tabloya kolon eklemez.
+    """
+    from sqlalchemy import inspect
+
     from src.database.models import Base
 
     Base.metadata.create_all(bind=engine)
+
+    # ADR-013: ExtractedCampaignDetail'a eklenen tarih kolonları için migration.
+    _migrate_add_columns(
+        engine,
+        "extracted_campaign_details",
+        {"start_date": "VARCHAR(20)", "end_date": "VARCHAR(20)"},
+    )
+
+
+def _migrate_add_columns(engine, table: str, columns: dict[str, str]) -> None:
+    """Var olan tabloya eksik kolonları ekler (idempotent)."""
+    from sqlalchemy import inspect
+
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        existing = {c["name"] for c in inspector.get_columns(table, bind=conn)}
+        for col, col_type in columns.items():
+            if col not in existing:
+                conn.execute(
+                    text(f"ALTER TABLE {table} ADD COLUMN {col} {col_type}")
+                )
