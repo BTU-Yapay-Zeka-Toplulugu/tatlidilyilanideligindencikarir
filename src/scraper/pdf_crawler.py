@@ -83,6 +83,20 @@ MAX_PDF_BYTES = 25 * 1024 * 1024
 # İndirme zaman aşımı (saniye)
 PDF_DOWNLOAD_TIMEOUT = 45
 
+# Parse zaman aşımı (saniye) — pdfplumber tek bir sayfada TAKILABİLİR;
+# bu guard olmadan tüm crawl donar (ADR-011 donma riski). Parse bu süreyi
+# aşarsa PDF atlanır, crawl devam eder.
+PDF_PARSE_TIMEOUT = 30
+
+# İndirmeye bile gitmeden ELENEN PDF ad/resmi döküman işaretçileri
+# (sözleşme, form, tarife vb. — kampanya içeriği taşımaz).
+IRRELEVANT_PDF_FILENAME = (
+    "sozlesme", "sözleşme", "form", "tarife", "bilgilendirme",
+    "aydınlatma", "aydinlatma", "kvkk", "gizlilik", "bilanço",
+    "faaliyet raporu", "wolfsberg", "izahname", "prospektus",
+    "prospectus", "hesap ozeti", "hesap özeti", "ekstre",
+)
+
 
 # ---------------------------------------------------------------------------
 # Yardımcılar
@@ -314,8 +328,8 @@ class RecursivePdfCrawler:
 # ---------------------------------------------------------------------------
 
 def download_pdf(candidate: PdfCandidate) -> Optional[bytes]:
-    """PDF'i indirir, başarısızlıkta None döner."""
-    try:
+    """PDF'i indirir, başarısızlıkta (zaman aşımı/DNS takılması dahil) None döner."""
+    def _fetch() -> Optional[bytes]:
         resp = requests.get(
             candidate.pdf_url,
             headers=DEFAULT_HEADERS,
@@ -337,9 +351,28 @@ def download_pdf(candidate: PdfCandidate) -> Optional[bytes]:
                            len(data) / 1024 / 1024, candidate.pdf_url)
             return None
         return data
-    except requests.exceptions.RequestException as e:
-        logger.warning("PDF indirilemedi: %s — %s", candidate.pdf_url, e)
-        return None
+
+    # DNS çözümü / bağlantı takılmaları requests timeout'ını bazen aşabildiğinden
+    # ayrı thread + duvar saati guard ile korunur (ADR-011 donma riski).
+    return _run_with_timeout(_fetch, PDF_DOWNLOAD_TIMEOUT + 10, label="indirme")
+
+
+def _run_with_timeout(func, timeout: int, label: str = "işlem"):
+    """Bir fonksiyonu ayrı thread'de çalıştırır; süre aşımında None döner.
+
+    pdfplumber tek bir sayfada TAKILABİLDİĞİNDEN (C seviyesinde blok) VEYA
+    ``requests.get`` DNS çözümünde takılabildiğinden bu guard olmadan tüm
+    crawl donar. Süre aşımı güvenliği için zorunludur (ADR-011 donma riski).
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=1) as ex:
+        future = ex.submit(func)
+        try:
+            return future.result(timeout=timeout)
+        except Exception as e:  # zaman aşımı veya hatası
+            logger.warning("PDF %s zaman aşımı/hatası (%ss): %s", label, timeout, e)
+            return None
 
 
 def _extract_first_pages_text(pdf_bytes: bytes, pages: int = PDF_SCAN_PAGES
@@ -353,9 +386,9 @@ def _extract_first_pages_text(pdf_bytes: bytes, pages: int = PDF_SCAN_PAGES
 
     import pdfplumber
 
-    text_parts: list[str] = []
-    scanned_suspected = False
-    try:
+    def _parse() -> tuple[str, bool]:
+        text_parts: list[str] = []
+        scanned_suspected = False
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
             for i, page in enumerate(pdf.pages):
                 if i >= pages:
@@ -365,12 +398,12 @@ def _extract_first_pages_text(pdf_bytes: bytes, pages: int = PDF_SCAN_PAGES
                 # Görüntü var ama metin yok → taranmış olabilir
                 if not page_text.strip() and (page.images or page.chars is None):
                     scanned_suspected = True
-    except Exception as e:
-        logger.warning("PDF metin çıkarımı başarısız: %s", e)
-        return "", False
+        return "\n".join(text_parts), scanned_suspected
 
-    full = "\n".join(text_parts)
-    return full, scanned_suspected
+    result = _run_with_timeout(_parse, PDF_PARSE_TIMEOUT)
+    if result is None:
+        return "", False
+    return result
 
 
 def is_campaign_pdf(pdf_bytes: bytes) -> tuple[bool, str]:
@@ -418,17 +451,20 @@ def extract_pdf_text(pdf_bytes: bytes) -> str:
 
     import pdfplumber
 
-    parts: list[str] = []
-    try:
+    def _parse() -> str:
+        parts: list[str] = []
         with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
             for page in pdf.pages:
                 page_text = page.extract_text() or ""
                 if page_text.strip():
                     parts.append(page_text)
-    except Exception as e:
-        logger.error("PDF tam metin çıkarımı başarısız: %s", e)
+        return "\n".join(parts)
+
+    result = _run_with_timeout(_parse, PDF_PARSE_TIMEOUT)
+    if result is None:
+        logger.error("PDF tam metin çıkarımı zaman aşımında atlandı.")
         return ""
-    return "\n".join(parts)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -487,6 +523,13 @@ def _process_pdf_candidates(
     """PDF adaylarını indirir, filtreler, metne çevirir → CampaignData listesi."""
     results: list[CampaignData] = []
     for i, cand in enumerate(candidates, 1):
+        # Dosya adıyla ELENEN resmi dökümanlar (sözleşme/form/tarife vb.) —
+        # indirmeye bile gerek kalmadan atlanır (zaman/ağ tasarrufu).
+        fname = cand.pdf_url.rsplit("/", 1)[-1].lower()
+        if any(bad in _tr_fold(fname) for bad in IRRELEVANT_PDF_FILENAME):
+            logger.info("  → Resmi döküman (atlandı): %s", cand.pdf_url)
+            continue
+
         logger.info(
             "[%d/%d] PDF inceleniyor: %s", i, len(candidates), cand.pdf_url
         )
