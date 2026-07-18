@@ -29,6 +29,11 @@ _PROFIT_RATE_CONTEXT = (
     "yıllık",
     "aylık",
 )
+# GüçlÜ (sadece kâr payı/getiri) bağlam anahtarları — bir disqualifier'ın
+# yanında bile olsa oranı kabul ettirir (ör. "yıllık" tek başına yetmez).
+_PROFIT_RATE_STRONG_CONTEXT = (
+    "kâr payı", "kar payi", "kâr oranı", "kar orani", "getiri", "oran",
+)
 _PROFIT_RATE_DISQUALIFIERS = (
     "iade",  # nakit iade / cashback
     "indirim",
@@ -111,17 +116,25 @@ def extract_profit_share_rate(text: str) -> float | None:
         if value <= 0 or value > _PROFIT_RATE_MAX:
             continue
 
-        # İlgisiz bağlamı GENİŞ pencerede tara (indirim/iade/LTV/clawback/
-        # devlet katkısı/stopaj/kdv ifadeleri yüzdeden biraz uzakta olabilir).
-        disq_window = _tr_fold(text[max(0, match.start() - 90):min(len(text), match.end() + 70)])
-        if any(bad in disq_window for bad in _PROFIT_RATE_DISQUALIFIERS):
-            continue
-
         # Kâr payı bağlamını DAR pencerede ara — oran, anahtar kelimeye
         # bitişik olmalı (LTV/vergi tablolarındaki uzak yüzdelerden kaçınmak
         # için pencere sıkı tutulur).
         ctx_window = _tr_fold(text[max(0, match.start() - 28):min(len(text), match.end() + 20)])
-        if any(ctx in ctx_window for ctx in _PROFIT_RATE_CONTEXT):
+        has_context = any(ctx in ctx_window for ctx in _PROFIT_RATE_CONTEXT)
+        has_strong_context = any(ctx in ctx_window for ctx in _PROFIT_RATE_STRONG_CONTEXT)
+
+        # İlgisiz bağlamı GENİŞ pencerede tara (indirim/iade/LTV/clawback/
+        # devlet katkısı/stopaj/kdv ifadeleri yüzdeden biraz uzakta olabilir).
+        # Zayıf bağlam ("yıllık"/"aylık") varsa ve bir disqualifier yakındaysa
+        # oranı ele. Yalnızca GÜÇLÜ bağlam (kâr payı/getiri/oran) bitişikse,
+        # bu disqualifier başka bir oranın gürültüsü olabilir — kabul et
+        # (ADR-013 edge-case: aynı cümlede birden fazla oran).
+        if not has_strong_context:
+            disq_window = _tr_fold(text[max(0, match.start() - 90):min(len(text), match.end() + 70)])
+            if any(bad in disq_window for bad in _PROFIT_RATE_DISQUALIFIERS):
+                continue
+
+        if has_context:
             return value
 
     return None
@@ -248,6 +261,46 @@ def extract_target_audience(text: str) -> str | None:
     return ", ".join(detected) if detected else "Herkes"
 
 
+def extract_dates(text: str) -> tuple[str | None, str | None]:
+    """Metinden başlangıç/bitiş tarihlerini (ISO YYYY-MM-DD) bularak döner.
+
+    Türkçe tarih formatlarını (GG.AA.YYYY, GG/AA/YYYY, "1 Ocak 2026",
+    "31 Aralık 2026 tarihine kadar") ve yıl-only ifadeleri destekler.
+    """
+    if not text:
+        return None, None
+
+    month_map = {
+        "ocak": 1, "şubat": 2, "subat": 2, "mart": 3, "nisan": 4,
+        "mayıs": 5, "mayis": 5, "haziran": 6, "temmuz": 7, "ağustos": 8,
+        "agustos": 8, "eylül": 9, "eylul": 9, "ekim": 10, "kasım": 11,
+        "kasim": 11, "aralık": 12, "aralik": 12,
+    }
+
+    found: list[str] = []
+
+    # 1) GG.AA.YYYY veya GG/AA/YYYY
+    for m in re.finditer(r"\b(\d{1,2})[./](\d{1,2})[./](\d{4})\b", text):
+        d, mo, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if 1 <= mo <= 12 and 1 <= d <= 31:
+            found.append(f"{y:04d}-{mo:02d}-{d:02d}")
+
+    # 2) "DD Ay YYYY" veya "DD Ay YYYY tarihine kadar"
+    for m in re.finditer(
+        r"\b(\d{1,2})\s+([a-zçğıöşü]+)\s+(\d{4})\b", text, re.IGNORECASE
+    ):
+        gm = month_map.get(_tr_fold(m.group(2)))
+        if gm:
+            found.append(f"{int(m.group(3)):04d}-{gm:02d}-{int(m.group(1)):02d}")
+
+    if not found:
+        return None, None
+    # Tekrarları kaldır, korunmuş sırada
+    seen: set[str] = set()
+    uniq = [x for x in found if not (x in seen or seen.add(x))]
+    return uniq[0], uniq[-1] if len(uniq) > 1 else None
+
+
 def split_sentences(text: str) -> list[str]:
     """Metni cümlelere böler, sayılar içindeki noktaları göz ardı eder."""
     # Nokta, ünlem, soru işaretlerinden sonra gelen büyük harf veya metin sonu ile böl
@@ -362,13 +415,21 @@ def classify_campaign_type(text: str) -> str:
 
 
 def extract_all_campaign_details(text: str) -> dict[str, Any]:
-    """Metinden tüm kampanya detaylarını çıkararak bir sözlük olarak döner."""
+    """Metinden tüm kampanya detaylarını çıkararak bir sözlük olarak döner.
+
+    Bu fonksiyon yalnızca KURAL TABANLI (regex) katmanı içerir; birleşik
+    regex+model hattı için ``src.nlp.pipeline.run_extraction_pipeline``
+    kullanılmalıdır (ADR-013).
+    """
     min_amt, max_amt = extract_amounts(text)
+    start_date, end_date = extract_dates(text)
     return {
         "profit_share_rate": extract_profit_share_rate(text),
         "term_months": extract_term_months(text),
         "min_amount": min_amt,
         "max_amount": max_amt,
+        "start_date": start_date,
+        "end_date": end_date,
         "advantage_description": extract_advantage(text),
         "target_audience": extract_target_audience(text),
         "campaign_type": classify_campaign_type(text),

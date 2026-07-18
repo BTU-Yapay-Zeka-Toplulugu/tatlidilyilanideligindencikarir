@@ -79,6 +79,8 @@ class ExtractedCampaignDetail(Base):
     term_months = Column(Integer, nullable=True)  # vade (ay olarak)
     min_amount = Column(Float, nullable=True)  # asgari tutar
     max_amount = Column(Float, nullable=True)  # azami tutar
+    start_date = Column(String(20), nullable=True)  # kampanya başlangıç tarihi (YYYY-MM-DD)
+    end_date = Column(String(20), nullable=True)  # kampanya bitiş tarihi (YYYY-MM-DD)
     advantage_description = Column(Text, nullable=True)  # kampanya avantajı
     target_audience = Column(String(255), nullable=True)  # hedef kitle
     campaign_type = Column(String(100), nullable=True)  # kampanya türü (sınıflandırma)

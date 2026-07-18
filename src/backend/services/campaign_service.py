@@ -5,7 +5,7 @@ from typing import Any
 
 from src.backend.repositories.campaign_repository import CampaignRepository
 from src.database.models import Bank, Campaign, ExtractedCampaignDetail
-from src.nlp.extractor import extract_all_campaign_details
+from src.nlp.pipeline import run_extraction_pipeline
 
 
 class CampaignService:
@@ -20,13 +20,15 @@ class CampaignService:
         existing = self.repository.get_extracted_detail(campaign.id)
         if existing:
             return existing
-        extracted = extract_all_campaign_details(campaign.raw_text)
+        extracted = run_extraction_pipeline(campaign.raw_text)
         detail = ExtractedCampaignDetail(
             campaign_id=campaign.id,
-            profit_share_rate=extracted["profit_share_rate"],
-            term_months=extracted["term_months"],
-            min_amount=extracted["min_amount"],
-            max_amount=extracted["max_amount"],
+            profit_share_rate=extracted["profit_share_rate_raw"],
+            term_months=extracted["term_months_raw"],
+            min_amount=extracted["min_amount_raw"],
+            max_amount=extracted["max_amount_raw"],
+            start_date=extracted["start_date"],
+            end_date=extracted["end_date"],
             advantage_description=extracted["advantage_description"],
             target_audience=extracted["target_audience"],
             campaign_type=extracted["campaign_type"],

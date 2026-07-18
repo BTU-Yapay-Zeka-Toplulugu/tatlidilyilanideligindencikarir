@@ -8,6 +8,34 @@
 - **Güncelleyen:** Otonom agent (sistem geneli debug & stabilizasyon oturumu)
 - **Genel Durum:** Üç şüpheli alan (A: WebSocket/chatbot, B: dashboard, C: veri kalitesi/extraction) kanıta dayalı olarak teşhis edilip düzeltildi ve uçtan uca test edildi (bkz. ADR-009). Chatbot atıfları artık gerçek banka/ürün/URL veriyor, uzun yanıtlarda bağlantı kopmuyor; dashboard karşılaştırma tablosu/grafiği gerçek tutar/oran ile doluyor; kâr payı oranı çıkarımı bağlam-duyarlı hâle getirildi (imkânsız %70–%100 değerleri elendi), Türkçe büyük-İ casefold hatası giderildi ve DB yeniden işlendi. `pytest tests/` → 113 passed. Bekleyen kalemler yalnızca insan işi olan demo videosu ve sunum dosyaları (ADR-007).
 
+## Bu Oturumda Yapılanlar (2026-07-17, Faz 1 + Faz 2)
+
+### Faz 1 — Dinamik & Recursive Keşif + PDF Extraction (ADR-011/ADR-012)
+- Eski statik `discovery.py` (sitemap-only + sabit `CAMPAIGN_KEYWORDS` + PDF atlama)
+  TAMAMEN kaldırıldı. Yerine `recursive_discovery.py`: ana URL'den BFS, anahtar
+  kelime filtresi `config.DISCOVERY_KEYWORDS`'te, `max_depth=3`/`max_pages`/`timeout`
+  KATI limitli, aynı domain sınırı, **per-page ilerleme logu**.
+- Tek akışta hem HTML kampanya sayfaları hem PDF havuzu bulunur. PDF'ler
+  `pdf_crawler` ile indirilir → kampanya/anahtar kelime filtresinden geçer →
+  pdfplumber ile metne çevrilir → HTML ile AYNI clean/NLP hattından geçer
+  (`CampaignData.source_type="pdf"`).
+- Taranmış (scanned) PDF'ler tespit edilip OCR yokken atlanır (loglanır), sistem çökmez.
+- Tüm 10 banka için dinamik keşif KANITLANDI (per-bank log): örn. ADİL 1 HTML+8 PDF,
+  T.O.M. 13 HTML+15 PDF (183 adaydan cap'li), KUVEYT 15 HTML+3 PDF, ZİRAAT 15 HTML+1 PDF.
+- Tam pipeline (HTML+PDF) çalıştırıldı → `campaigns_COMBINED_10banks.json`:
+  **170 kayıt (134 HTML + 36 PDF), 10 banka**.
+
+### Faz 2.1 — Veri Katmanı
+- `data_cleaner` → `campaigns_cleaned.json` (170 kayıt, 10 banka, html+pdf).
+- `seed` → PostgreSQL (5440, yerel küme) 10 banka + 112 yeni kampanya.
+- `reprocess` → 236 kampanya NLP çıkarımı (124 güncelleme + 112 yeni).
+- Doğrulama: 36 PDF-kaynaklı kampanya DB'de; oranlar tutarlı sayısal formatta
+  (%100+ imkânsız değer yok — ADR-009 kuralı PDF metninde de geçerli). **PASS**
+
+| Tarih | Alan | Sonuç | Detay |
+| --- | --- | --- | --- |
+| 2026-07-17 | Veri katmanı (Dinamik Crawler + PDF) | ✅ | 170 kayıt (134 HTML+36 PDF), 10 banka, seed+reprocess hatasız; oran formatı tutarlı |
+
 ## Bu Oturumda Yapılan Debug/Düzeltmeler (2026-07-17)
 
 | Tarih | Sorun | Kök sebep | Çözüm | Test sonucu |

@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 from src.database.connection import SessionLocal, init_db
 from src.database.models import Campaign, ExtractedCampaignDetail
-from src.nlp.extractor import extract_all_campaign_details
+from src.nlp.pipeline import run_extraction_pipeline
 
 
 def reprocess() -> dict[str, int]:
@@ -28,7 +28,7 @@ def reprocess() -> dict[str, int]:
     try:
         campaigns = db.query(Campaign).all()
         for campaign in campaigns:
-            extracted = extract_all_campaign_details(campaign.raw_text)
+            extracted = run_extraction_pipeline(campaign.raw_text)
             detail = (
                 db.query(ExtractedCampaignDetail)
                 .filter_by(campaign_id=campaign.id)
@@ -40,10 +40,12 @@ def reprocess() -> dict[str, int]:
                 created += 1
             else:
                 updated += 1
-            detail.profit_share_rate = extracted["profit_share_rate"]
-            detail.term_months = extracted["term_months"]
-            detail.min_amount = extracted["min_amount"]
-            detail.max_amount = extracted["max_amount"]
+            detail.profit_share_rate = extracted["profit_share_rate_raw"]
+            detail.term_months = extracted["term_months_raw"]
+            detail.min_amount = extracted["min_amount_raw"]
+            detail.max_amount = extracted["max_amount_raw"]
+            detail.start_date = extracted["start_date"]
+            detail.end_date = extracted["end_date"]
             detail.advantage_description = extracted["advantage_description"]
             detail.target_audience = extracted["target_audience"]
             detail.campaign_type = extracted["campaign_type"]

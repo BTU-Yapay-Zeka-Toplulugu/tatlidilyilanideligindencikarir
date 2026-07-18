@@ -43,27 +43,32 @@ logger = logging.getLogger(__name__)
 # PDF olarak kabul edilecek dosya uzantısı
 PDF_EXTENSION = ".pdf"
 
-# Kampanya/oran içeriğini işaret eden anahtar kelimeler (Türkçe-duyarlı fold ile)
+# Kampanya/oran içeriğini işaret eden GÜÇLÜ anahtar kelimeler (Türkçe-duyarlı fold ile).
+# Tek başına "oran"/"kâr"/"taksit" gibi zayıf kelimeler KVKK/gizlilik/fee formlarında
+# da geçtiğinden kampanya PDF'i sayılmaz; yalnızca GÜÇLÜ sinyaller kabul edilir.
 CAMPAIGN_PDF_KEYWORDS = (
-    "kâr payı", "kar payi", "kâr oranı", "kar orani",
+    "kâr payı", "kar payi", "kâr payi",
     "finansman oranı", "finansman orani", "finansman",
-    "kampanya", "fırsat", "firsa",
-    "vade", "oran", "kâr", "kar",
-    "profit rate", "profit",
-    "katılım fonu", "katilim fonu",
-    "teminat", "taksit",
+    "kampanya", "kampanyalar", "fırsat", "firsa",
+    "katılma hesabı", "katilma hesabi", "katılma fonu", "katilim fonu",
+    "kâr payı oranı", "kar payi orani",
+    "profit rate", "profit share",
+    "hoş geldin", "hos geldin",
+    "taksitli finansman", "konut finansman", "taşıt finansman", "tasit finansman",
 )
 
-# İlgisiz (eleme) PDF işaretleri — yüksek öncelikli anahtar kelimeler
-# (aydınlatma metni, gizlilik, sözleşme, KVKK vb.)
+# İlgisiz (eleme) PDF işaretleri — bu kelimeler baskın ise belge kampanya değildir
+# (aydınlatma metni, gizlilik, sözleşme, KVKK, ücret tarifesi/fee disclosure vb.)
 IRRELEVANT_PDF_KEYWORDS = (
-    "aydınlatma", "aydinlatma", "kvkk", "gizlilik",
+    "aydınlatma", "aydinlatma", "kvkk", "gizlilik politikası", "gizlilik politikasi",
     "sözleşme", "sozlesme", "bilgilendirme formu",
     "bilgilendirme metni", "rıza", "riza", "feragat",
-    "uygulama esasları",
+    "uygulama esasları", "wolfsberg", "kişisel verilerin korunması",
+    "kisisel verilerin korunmasi", "ücret tarifesi", "ucret tarifesi",
+    "menkul kıymet", "menkul kiymet", "faaliyet raporu", "bilanço",
 )
 
-# Filtreleme eşiği: ilk N sayfada kaç kampanya anahtar kelimesi görülmeli
+# Filtreleme eşiği: ilk N sayfada kaç GÜÇLÜ kampanya anahtar kelimesi görülmeli
 CAMPAIGN_KEYWORD_MIN_HITS = 1
 
 # Recursive crawl için maksimum derinlik
@@ -383,22 +388,19 @@ def is_campaign_pdf(pdf_bytes: bytes) -> tuple[bool, str]:
             return False, "scanned_no_ocr"
         return False, "empty_text"
 
-    # Önce ilgisiz (eleme) anahtar kelimelerini kontrol et
-    for kw in IRRELEVANT_PDF_KEYWORDS:
-        if _tr_fold(kw) in folded:
-            # aydınlatma/sözleşme gibi ama aynı zamanda kampanya da olabilir;
-            # yalnızca bu kelimeler varsa ve kampanya kelimesi YOKSA ele
-            has_campaign = any(
-                _tr_fold(ck) in folded for ck in CAMPAIGN_PDF_KEYWORDS
-            )
-            if not has_campaign:
-                return False, f"irrelevant:{kw}"
+    # GÜÇLÜ kampanya sinyali sayısı
+    hits = sum(1 for kw in CAMPAIGN_PDF_KEYWORDS if _tr_fold(kw) in folded)
 
-    # Kampanya anahtar kelimesi sayısını say
-    hits = 0
-    for kw in CAMPAIGN_PDF_KEYWORDS:
-        if _tr_fold(kw) in folded:
-            hits += 1
+    # İlgisiz (eleme) anahtar kelimesi varsa belge kampanya dışı bir
+    # resmi döküman (KVKK/gizlilik/sözleşme/ücret tarifesi) olabilir.
+    # Bu durumda yalnızca zayıf "oran/kâr" eşleşmesi YETERLİ DEĞİLDİR;
+    # en az 2 GÜÇLÜ kampanya sinyali gerekir (fee disclosure formları elenir).
+    irrelevant_hit = next(
+        (kw for kw in IRRELEVANT_PDF_KEYWORDS if _tr_fold(kw) in folded),
+        None,
+    )
+    if irrelevant_hit and hits < 2:
+        return False, f"irrelevant:{irrelevant_hit}"
 
     if hits >= CAMPAIGN_KEYWORD_MIN_HITS:
         return True, f"campaign_hits:{hits}"

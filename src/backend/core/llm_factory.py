@@ -27,8 +27,13 @@ class LLMClient(ABC):
 class GgufLLMClient(LLMClient):
     """llama.cpp (llama-cpp-python) ile diskteki .gguf dosyasını yükleyen istemci."""
 
-    def __init__(self, model_path: str | None = None, n_ctx: int = 4096, n_threads: int | None = None) -> None:
-        """GGUF dosya yolunu ve çıkarım parametrelerini yapılandırır."""
+    def __init__(self, model_path: str | None = None, n_ctx: int = 4096, n_threads: int | None = 1) -> None:
+        """GGUF dosya yolunu ve çıkarım parametreelerini yapılandırır.
+
+        ``n_threads`` varsayılan 1'dir: llama.cpp çoklu iş parçacığında
+        bazı CPU'larda çıkarım sırasında Segmentation fault üretebiliyor;
+        tek iş parçacığı çıkarımı kararlı kılar (daha yavaş ama çökmez).
+        """
         self.model_path = model_path or settings.local_model_path
         self.n_ctx = n_ctx
         self.n_threads = n_threads
