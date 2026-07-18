@@ -188,3 +188,37 @@ Format:
 - **Gerekçe:** Üretim dışı binary varlıkları otomatik üretmek mümkün değil; yarışma teslimi için insan onayı gereklidir.
 - **Alternatifler:** Yok (fiziksel kısıt).
 - **Sonuçlar:** README "Teslim Edilecekler Durumu" tablosunda bu kalemler "ekip tarafından tamamlanacak" olarak işaretlendi.
+## ADR-013: Birleşik Regex + Model Extraction Pipeline (Kanonik Çıktı)
+
+- **Tarih:** 18 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** Faz 1/2 (ADR-011/012) veri toplamayı çözmüştü; ancak bilgi
+  çıkarımı (1) yalnızca regex katmanından (`extractor.extract_all_campaign_details`)
+  ibaretti, model/NER katmanı (ML `CampaignClassifier`) ayrı ve uzlaştırılmamış
+  çalışıyordu; (2) tarih çıkarımı hiç yoktu; (3) oran/tutar formatları
+  (`%2,05`/`2.05%`, `500 TL`/`500₺`) tek bir kanonik forma indirgenmiyordu;
+  (4) HTML ve PDF kaynaklı metin aynı hatadan geçiyordu sayılsa da tüm
+  pipeline tek fonksiyonda toplu değildi.
+- **Karar:** `src/nlp/pipeline.py` merkezî `run_extraction_pipeline(text)`
+  kuruldu — HTML ve PDF metni AYNI fonksiyonla işlenir:
+  1. **Regex katmanı** (`RegexExtractor`): net kalıplar (oran/tutar/vade/tarih).
+  2. **Model/NER katmanı** (`ModelExtractor`): regex'in boş bıraktığı alanlar
+     (özellikle kampanya türü — `CampaignClassifier`).
+  3. **Uzlaştırma:** `merge_field` kuralı — *regex net değer bulduysa regex
+     kazanır; regex boşsa model sonucu kullanılır* (ADR-002 hibrit ilkesi).
+  4. **Kanonik normalizasyon:** her alan TEK forma indirgenir
+     (`%X.XX`, `X.XXX TL`, `YYYY-MM-DD`); ham değerler `*_raw` ile de tutulur.
+  - Tarih çıkarımı eklendi (`extract_dates`: GG.AA.YYYY / DD Ay YYYY → ISO).
+  - Çoklu oran edge-case'inde bitişik kâr payı bağlamı, uzaktaki iade/iştirak
+    gürültüsünü ezer (disqualifier yalnızca GÜÇLÜ bağlam yoksa uygulanır).
+  - DB şemasına `start_date`/`end_date` eklendi (idempotent ALTER migration
+    `connection.init_db` içinde); `campaign_service` + `reprocess` pipeline'a
+    bağlandı. Strategy Pattern ile `ExtractorStrategy` arayüzü (CLAUDE.md).
+- **Gerekçe:** Tek, tutarlı, test edilebilir çıkarım hattı; regex güvenilirliği
+  korunur, model boşlukları doldurur; frontend/DB tek kanonik form görür.
+- **Alternatifler:** Ayrı regex ve model fonksiyonlarını çağıran modüller
+  (tutarsız çıkıyordu — reddedildi); sadece LLM çıkarım (yavaş/öngörülemez —
+  ADR-002 gereği reddedildi).
+- **Sonuçlar:** `tests/test_nlp/test_pipeline.py` (uzlaştırma, kanonik form,
+  tarih, çoklu-oran edge-case). Tüm 10 banka (239 kampanya) pipeline ile
+  yeniden işlendi; oranlar makul bantta (max %50, >%50 yok). `pytest` 131 passed.

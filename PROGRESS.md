@@ -4,9 +4,71 @@
 
 ## Son Güncelleme
 
-- **Tarih:** 17 Temmuz 2026
-- **Güncelleyen:** Otonom agent (sistem geneli debug & stabilizasyon oturumu)
-- **Genel Durum:** Üç şüpheli alan (A: WebSocket/chatbot, B: dashboard, C: veri kalitesi/extraction) kanıta dayalı olarak teşhis edilip düzeltildi ve uçtan uca test edildi (bkz. ADR-009). Chatbot atıfları artık gerçek banka/ürün/URL veriyor, uzun yanıtlarda bağlantı kopmuyor; dashboard karşılaştırma tablosu/grafiği gerçek tutar/oran ile doluyor; kâr payı oranı çıkarımı bağlam-duyarlı hâle getirildi (imkânsız %70–%100 değerleri elendi), Türkçe büyük-İ casefold hatası giderildi ve DB yeniden işlendi. `pytest tests/` → 113 passed. Bekleyen kalemler yalnızca insan işi olan demo videosu ve sunum dosyaları (ADR-007).
+- **Tarih:** 18 Temmuz 2026
+- **Güncelleyen:** Otonom agent (Dinamik/Recursive Keşif + PDF + Birleşik Pipeline + E2E Doğrulama oturumu)
+- **Genel Durum:** Master prompt'un Faz 1–5 hattı kanıta dayalı olarak doğrulandı/iyileştirildi. Faz 1 (dinamik recursive keşif) ve Faz 2 (PDF extraction) zaten mevcuttu (ADR-011/012); bu oturumda (a) PDF filtresi kalitesi artırıldı ve **donma riski kesin olarak kapatıldı** (parse+download için duvar saati timeout guard'ı), (b) Faz 3 birleşik regex+model pipeline'ı kuruldu (`src/nlp/pipeline.py`, ADR-013), (c) Faz 4 ile tüm 10 banka (239 kampanya) yeniden üretilip DB'ye seed+reprocess edildi, (d) Faz 5 uçtan uca doğrulandı (REST/WebSocket/frontend). `pytest tests/` → 131 passed. Bekleyen kalemler yalnızca insan işi olan demo videosu ve sunum dosyaları (ADR-007).
+
+## Bu Oturumda Yapılanlar (2026-07-18, Faz 1–5)
+
+### Faz 1 — Dinamik & Recursive Keşif (ZATEN MEVCUT, ADR-012)
+- Statik path/liste YOK; `recursive_discovery.py` BFS + `config.DISCOVERY_KEYWORDS`
+  + katı limitler (`max_depth=3`, `max_pages=60`, per-request timeout, retry).
+- **Kanıt:** Banka 1 (ADİL) foreground'da 18 sayfa ~22s'de tarandı, her sayfada
+  `visiting:` logu; 10 banka tam crawl ~22 dk'da, hiçbir bankada takılmadan bitti
+  (her banka `recursive keşif bitti` logu üretti). 1442 HTML + PDF havuzu keşfedildi.
+
+### Faz 2 — PDF Extraction (İYİLEŞTİRME)
+- **Donma riski KAPATILDI:** `pdf_crawler` parse (`pdfplumber`) VE download
+  (`requests.get`, DNS takılması dahil) ayrı thread + duvar saati timeout ile
+  korundu (`PDF_PARSE_TIMEOUT=30s`, download `timeout+10s`); executor
+  `shutdown(wait=False)` ile takılan worker beklenmeden bırakılır. Tek PDF artık
+  tüm taramayı donduramaz. (Önceki denemede "Genel Kredi Sözleşmesi.pdf" 10+ dk
+  takıyordu → artık 30s'de atlanıyor.)
+- **Filtre kalitesi:** Kampanya PDF filtresi güçlü anahtar kelimelere daraltıldı;
+  KVKK/gizlilik/ücret tarifesi/fee disclosure artık kampanya sayılmaz. Dosya adı
+  tabanlı resmi döküman elemesi (`IRRELEVANT_PDF_FILENAME`) indirmeye gitmeden
+  uygulanır.
+- **Kanıt:** Tam crawl'da 13 kampanya PDF'i işlendi (önceki 36'ya göre gürültü
+  azaldı); taranmış/OCR gereken PDF'ler loglanıp atlandı, sistem çökmedi.
+
+### Faz 3 — Birleşik Regex + Model Pipeline (YENİ, ADR-013)
+- `src/nlp/pipeline.py`: `run_extraction_pipeline(text)` — regex katmanı →
+  model/NER katmanı → `merge_field` uzlaştırma (regex netse kazanır, boşsa model)
+  → kanonik normalizasyon (`%X.XX`, `X.XXX TL`, `YYYY-MM-DD`). HTML+PDF AYNI
+  fonksiyondan geçer. Strategy Pattern (`ExtractorStrategy`).
+- Tarih çıkarımı eklendi; çoklu-oran edge-case'i düzeltildi.
+- `campaign_service.ensure_nlp_processed` + `reprocess` pipeline'a bağlandı;
+  DB'ye `start_date`/`end_date` kolonu (idempotent migration).
+- **Kanıt:** `tests/test_nlp/test_pipeline.py` 10 test (uzlaştırma/kanonik
+  form/%2,05→2.05/"500 TL"=="500₺"/tarih/çoklu-oran). Tam suite 131 passed.
+
+### Faz 4 — Veri Yeniden Üretimi + Kalite Kontrolü
+- `python -m src.scraper.main` → `campaigns_20260718_173417.json`: **149 kayıt
+  (136 HTML + 13 PDF), 10 banka**. `data_cleaner` → 149 temiz kayıt.
+- Seed: 10 banka + 3 yeni kampanya. `reprocess`: 239 kampanya (236 güncelleme +
+  3 yeni) birleşik pipeline ile. Oran dağılımı: 32 kayıtta oran, **max %50,
+  >%50 değer YOK** (imkânsız %70–%100 elendi). Tarihler ISO'da çıkarıldı.
+
+### Faz 5 — Tam E2E Doğrulama
+| Alan | Sonuç | Kanıt |
+| --- | --- | --- |
+| Backend API (REST) | ✅ | `/` , `/finansman/bankalar` (10 banka), `/finansman/ozet` (239 kayıt, gerçek tutar/karOrani), `/finansman/karsilastirma` (239), `/api/campaigns`, `/api/compare` — hepsi 200 + gerçek veri |
+| WebSocket / Chatbot | ✅ | `/ws/chat` gerçek mesajla 4 chunk + `bitti` + 3 GERÇEK atıf (banka/ürün/URL) döndü; REST `/chat/mesaj` de RAG kaynaklı cevap + atıf verdi |
+| Frontend / Dashboard | ✅ | `npm run build` temiz; `vite preview` servisi `/finansman/ozet`,`/finansman/bankalar`,`/ws/chat` uç noktalarına bağlı (üretim JS'inde doğrulandı); backend 239 gerçek kayıtla dolu |
+| Uçtan uca senaryo | ✅ | Tarama→NLP→DB→API→dashboard→chatbot zinciri tutarlı çalıştı |
+
+> Not: WebSocket test istemcisinde `websockets` 16.x varsayılan ping davranışı
+> nedeniyle ilk denemede gecikme oldu; sunucu tarafı doğru (ping params verilince
+> 4 chunk + atıf akışı geldi). Bu bir backend hatası değil, test istemci ayarıdır.
+
+## Şu An Neredeyiz
+
+- [x] Faz 1: Dinamik/recursive keşif (statik path'ler kaldırıldı, ADR-012)
+- [x] Faz 2: PDF extraction + donma riski kapatıldı + filtre kalitesi
+- [x] Faz 3: Birleşik regex+model pipeline (ADR-013) + tarih çıkarımı
+- [x] Faz 4: Tüm veri yeniden üretildi (149 kayıt, 10 banka) + seed + reprocess
+- [x] Faz 5: E2E doğrulama (REST/WS/frontend) — 131 pytest passed
+- [ ] Demo videosu (ADR-007 — ekip) ve PPTX/PDF sunum (ADR-007 — ekip)
 
 ## Bu Oturumda Yapılanlar (2026-07-17, Faz 1 + Faz 2)
 
