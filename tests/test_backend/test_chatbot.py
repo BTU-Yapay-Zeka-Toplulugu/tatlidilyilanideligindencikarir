@@ -17,6 +17,7 @@ class MockLexicalEmbedder:
     """Testler için basit, metin uzunluğundan etkilenmeyen kelime eşleşmeli gömme üreteci."""
 
     def embed(self, texts: list[str]) -> list[list[float]]:
+        """Metin listesini basit kelime-var/yok vektörlerine gömer."""
         vocab = ["katılma", "hesabı", "kâr", "payı", "vade", "mevduat", "bankası"]
         vectors = []
         for t in texts:
