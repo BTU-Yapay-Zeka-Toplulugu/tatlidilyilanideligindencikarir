@@ -4,9 +4,21 @@
 
 ## Son Güncelleme
 
-- **Tarih:** 18 Temmuz 2026
-- **Güncelleyen:** Otonom agent (Dinamik/Recursive Keşif + PDF + Birleşik Pipeline + E2E Doğrulama oturumu)
-- **Genel Durum:** Master prompt'un Faz 1–5 hattı kanıta dayalı olarak doğrulandı/iyileştirildi. Faz 1 (dinamik recursive keşif) ve Faz 2 (PDF extraction) zaten mevcuttu (ADR-011/012); bu oturumda (a) PDF filtresi kalitesi artırıldı ve **donma riski kesin olarak kapatıldı** (parse+download için duvar saati timeout guard'ı), (b) Faz 3 birleşik regex+model pipeline'ı kuruldu (`src/nlp/pipeline.py`, ADR-013), (c) Faz 4 ile tüm 10 banka (239 kampanya) yeniden üretilip DB'ye seed+reprocess edildi, (d) Faz 5 uçtan uca doğrulandı (REST/WebSocket/frontend). `pytest tests/` → 131 passed. Bekleyen kalemler yalnızca insan işi olan demo videosu ve sunum dosyaları (ADR-007).
+- **Tarih:** 19 Temmuz 2026
+- **Güncelleyen:** Antigravity AI Coding Agent
+- **Genel Durum:** RAG Chatbot'un backend ve frontend (React-Vite) entegrasyonu tamamlandı. Arayüzün backend ile sorunsuz konuşabilmesi için `.env` yapılandırıldı, CORS ve API proxy kanalları REST ve WebSocket için doğrulandı. Chatbot arayüzündeki atıflar tıklanabilir linklere (`<a>` tag) dönüştürülerek kullanıcı deneyimi iyileştirildi. SQLite tabanlı canlı backend ve Vite dev server üzerinde yapılan E2E UI testleri (veri getirme, streaming mesajlaşma, atıf listeleme ve alakasız soru filtreleme) başarıyla tamamlandı. `pytest tests/` → 126 passed, 8 skipped.
+
+## Bu Oturumda Yapılanlar (2026-07-19, Frontend Entegrasyonu ve UI E2E Doğrulama)
+
+### 1. Vite Frontend API & WebSocket Bağlantısı
+- **Ortam Değişkenleri (`src/frontend/.env`):** Vite projesinin kök dizinine yerel backend adreslerini (`VITE_API_BASE_URL` ve `VITE_CHATBOT_WS_URL`) tanımlayan `.env` dosyası eklendi.
+- **Tıklanabilir Atıflar (`ChatMessage.jsx`):** Chatbot arayüzünde listelenen atıfların (kaynakların) banka ismi ve kampanya başlığı bilgileriyle birlikte tıklanabilir link (`<a>` tag) olarak açılması sağlandı. `PropTypes` şeması `url` alanını da kapsayacak şekilde güncellendi.
+- **Vite Proxy Doğrulaması:** Vite geliştirme sunucusunun (port 5173) `/finansman` ve `/chat` proxy yönlendirmeleri ile WebSocket (`/ws`) tünellemesinin FastAPI backend sunucusuna (port 8000) veri kaybı olmadan bağlandığı kanıtlandı.
+
+### 2. Tam Entegrasyon ve UI E2E Testleri
+- **Vite Build Başarısı:** React-Vite uygulamasının derleme zinciri `npm run build` komutuyla test edildi; kod blokları ve markdown bileşenleriyle birlikte **0 hata ile başarıyla derlendi**.
+- **Dashboard Veri Yükleme:** Arayüz dev sunucusu üzerinden yapılan GET isteklerinde `/finansman/bankalar`, `/finansman/ozet` ve `/finansman/karsilastirma` uç noktalarından gelen gerçekçi kampanya ve banka kayıtlarının başarıyla çekildiği doğrulandı.
+- **Chatbot UI Streaming & Atıf Testi:** WebSocket proxy kanalı üzerinden gönderilen karşılaştırmalı sorunun (`"vadeli katılım hesabı sence nerden acmaliyim"`) RAG motorundan 3 farklı bankanın (T.O.M., Ziraat ve Adil Katılım) atıflarını (isim, başlık, url) ve cevap chunk'larını UI'a başarıyla akıttığı doğrulandı. Alakasız sorularda benzerlik eşiğinin doğru çalışarak arayüzde doğrudan "Bu konuda bilgiye sahip değilim." yanıtını döndürdüğü kanıtlandı.
 
 ## Bu Oturumda Yapılanlar (2026-07-18, Faz 1–5)
 

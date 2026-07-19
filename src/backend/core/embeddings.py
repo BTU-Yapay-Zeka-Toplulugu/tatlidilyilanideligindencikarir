@@ -39,9 +39,10 @@ class LocalLexicalEmbedder(Embedder):
             count = lower.count(term)
             if i < self.dimension:
                 vec[i] = float(count)
-        # Karakter uzunluğu gibi deterministik bir öznitelik de ekle
-        if self.dimension > len(self._seed_terms):
-            vec[len(self._seed_terms)] = float(len(text))
+        # Karakter uzunluğu özelliği kaldırıldı (similarity threshold'u bozduğu için).
+        # Sıfır vektörü durumunda kosinüs benzerliğinde sıfıra bölme hatasını önlemek için epsilon ekle.
+        if np.sum(vec) == 0:
+            vec[-1] = 1e-5
         return vec
 
     def embed(self, texts: list[str]) -> list[list[float]]:

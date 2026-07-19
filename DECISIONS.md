@@ -222,3 +222,18 @@ Format:
 - **Sonuçlar:** `tests/test_nlp/test_pipeline.py` (uzlaştırma, kanonik form,
   tarih, çoklu-oran edge-case). Tüm 10 banka (239 kampanya) pipeline ile
   yeniden işlendi; oranlar makul bantta (max %50, >%50 yok). `pytest` 131 passed.
+
+## ADR-014: RAG Chatbot İyileştirmeleri ve Benzerlik Eşik Filtresi
+
+- **Tarih:** 19 Temmuz 2026
+- **Durum:** Kabul edildi
+- **Bağlam:** Canlı testler sırasında RAG Chatbot'un anlamsız/gramatik olarak bozuk ve şablon cevaplar ürettiği ("Vadeli Hesap Katılım bankası sence..."), mükerrer kaynakları atıf olarak listelediği ve vadeli hesap sorgularına günlük hesap FAQ gibi alakasız PDF kaynaklarını getirdiği gözlendi. Ayrıca `LocalLexicalEmbedder`'daki karakter uzunluğu özelliğinden dolayı kosinüs benzerliği skorlarının her belge için 0.99 çıkması sonucu eşik değer filtrelemesi düzgün çalışmıyordu.
+- **Karar:**
+  1. **İstem Şablonu:** `chatbot_service.py`'deki sistem istemi güncellenerek chatbot'un Türkçe gramer kurallarına uyması, tarafsız olması, "sence" gibi öznel kelimeleri sızdırmaması ve verilen bağlamın dışına kesinlikle çıkmaması (cevap yoksa net olarak "Bu bilgiye sahip değilim" demesi) kurala bağlandı.
+  2. **Tekilleştirme:** Aynı ID, aynı URL veya aynı metne sahip mükerrer belgeler retrieval aşamasında elendi.
+  3. **Benzerlik Eşiği & Epsilon Guard:** `LocalLexicalEmbedder`'daki karakter uzunluğu özelliği çıkarıldı (yerine sıfır-vektör bölünmesini önleyen epsilon eklendi) ve chatbot'a `0.15` benzerlik eşik filtresi uygulandı. Böylece alakasız/absürt sorularda belgeler filtrelenerek chatbot'un boş bağlamla güvenli bir şekilde "Bu bilgiye sahip değilim" cevabı üretmesi sağlandı.
+  4. **Banka Çeşitlendirmesi (Round-Robin):** Karşılaştırmalı sorgularda (örneğin "nereden açmalıyım") tek bir banka belgelerinin listeyi domine etmesini önlemek amacıyla retrieved belgeler banka bazında gruplandırılarak round-robin algoritmasıyla çeşitlendirildi (diversity).
+  5. **Model Skip Mantığı:** `tests/test_backend/test_gguf_llm.py`'deki entegrasyon testlerine `llama-cpp-python` kütüphanesi veya GGUF model dizinleri eksikse dinamik olarak skip edilme koşulu eklendi.
+- **Gerekçe:** Kullanıcının chatbot deneyimini iyileştirmek, halüsinasyonları ve alakasız veri sızıntılarını engellemek, bankalar arası objektif ve zengin karşılaştırma sunmak ve test paketinin derleme hatalarından arındırılmasını sağlamak.
+- **Alternatifler:** Sadece istemi değiştirmek — benzerlik eşiği ve tekilleştirme olmadan LLM'e alakasız ve mükerrer bağlamlar verilmeye devam edeceği ve halüsinasyon riskini tam çözmeyeceği için elendi.
+- **Sonuçlar:** 126 test passed (8 skipped). SQLite ve mock seeder ile yapılan canlı API ve WebSocket stream doğrulamalarında karşılaştırma, bilgi ve alakasız soruların tümü mükemmel şekilde yanıtlandı.

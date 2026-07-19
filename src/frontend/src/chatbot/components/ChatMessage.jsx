@@ -89,13 +89,16 @@ export const ChatMessage = ({ mesaj }) => {
           {botMu && mesaj.atiflar && mesaj.atiflar.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5" aria-label={t('chatbot.sources')}>
               {mesaj.atiflar.map((atif, index) => (
-                <span
+                <a
                   key={index}
-                  className="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium shadow-sm border-black/10 bg-white/80 text-black/70 dark:border-white/10 dark:bg-black/80 dark:text-white/70"
-                  title={`Kaynak: ${atif.bankaAdi} — ${atif.urunAdi}`}
+                  href={atif.url || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium shadow-sm border-black/10 bg-white/80 text-black/70 dark:border-white/10 dark:bg-black/80 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  title={`Kaynak: ${atif.bankaAdi} — ${atif.urunAdi} (Tıklayarak kaynağa gidin)`}
                 >
                   [{atif.bankaAdi} — {atif.urunAdi}]
-                </span>
+                </a>
               ))}
             </div>
           )}
@@ -121,6 +124,7 @@ ChatMessage.propTypes = {
       PropTypes.shape({
         bankaAdi: PropTypes.string.isRequired,
         urunAdi:  PropTypes.string.isRequired,
+        url:      PropTypes.string,
       })
     ),
     zaman:     PropTypes.string,

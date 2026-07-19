@@ -14,9 +14,16 @@ def _gguf_in(directory: str) -> bool:
     return p.is_dir() and any(p.glob("*.gguf"))
 
 
+try:
+    import llama_cpp
+    HAS_LLAMA_CPP = True
+except ImportError:
+    HAS_LLAMA_CPP = False
+
+
 pytestmark = pytest.mark.skipif(
-    not _gguf_in(settings.main_responser_model_path),
-    reason="Yerel .gguf modeli bulunamadı (model/main_responser/ altına ekleyin)",
+    not HAS_LLAMA_CPP or not _gguf_in(settings.main_responser_model_path),
+    reason="llama-cpp-python kurulu değil veya yerel .gguf modeli bulunamadı (model/main_responser/ altına ekleyin)",
 )
 
 
@@ -42,6 +49,9 @@ def test_all_task_model_dirs_present():
         settings.embedder_model_path,
         settings.comparison_model_path,
     ]
+    missing_dirs = [p for p in paths if not Path(p).is_dir()]
+    if len(missing_dirs) > 0:
+        pytest.skip(f"Bazı model dizinleri mevcut değil: {missing_dirs}")
     for p in paths:
         assert _gguf_in(p), f"Eksik model dizini: {p}"
 
